@@ -1,8 +1,4 @@
-provider "aws" {
-  region     = var.region
-  access_key = "enter_your_access_key"
-  secret_key = "enter_your_secret_key"
-}
+
 
 #creating the vpc
 module "vpc" {
@@ -27,4 +23,12 @@ module "ec2" {
   key_name      = var.key_name
   # image_name    = var.image_name
 
+}
+
+#creating the s3
+
+module "s3" {
+  source      = "../modules/s3"
+  bucketname = var.bucketname
+  s3env       = var.bucketenv
 }

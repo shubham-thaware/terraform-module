@@ -32,3 +32,15 @@ variable "key_name" {
 # variable "image_name" {
 
 # }
+
+variable "bucketname"{
+  description = "requires unique name for s3 bucket "
+  type = string
+  default = ""
+}
+
+variable "bucketenv"{
+  description = "requires env name for s3 bucket like dev, qa, stage & prod"
+  type = string
+  default = ""
+}

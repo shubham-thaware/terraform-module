@@ -9,3 +9,6 @@ instance-type       = "t2.micro"
 port                = [80, 8080, 443, 9090, 9000]
 key_name            = "mykey"
 # image_name          = ["ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2*"]
+#values for s3
+bucketname = "enternamehere"
+bucketenv =  "enterenvhere"
