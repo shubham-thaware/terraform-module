@@ -1,37 +1,37 @@
 
 
 #creating the vpc
-# module "vpc" {
-#   source              = "../modules/vpc"
-#   region              = var.region
-#   env                 = var.env
-#   vpc_cidr            = var.vpc_cidr
-#   public_subnet_cidr1 = var.public_subnet_cidr1
-#   public_subnet_cidr2 = var.public_subnet_cidr2
-#   private_subnet1     = var.private_subnet1
-#   private_subnet2     = var.private_subnet2
+module "vpc" {
+  source              = "../modules/vpc"
+  region              = var.region
+  env                 = var.env
+  vpc_cidr            = var.vpc_cidr
+  public_subnet_cidr1 = var.public_subnet_cidr1
+  public_subnet_cidr2 = var.public_subnet_cidr2
+  private_subnet1     = var.private_subnet1
+  private_subnet2     = var.private_subnet2
 
-# }
+}
 
 # #creating the ec2
-# module "ec2" {
-#   source        = "../modules/ec2"
-#   instance-type = var.instance-type
-#   ports         = var.port
-#   public-subnet = module.vpc.public_subnet_az1
-#   key           = file("${path.module}/id_rsa.pub")
-#   key_name      = var.key_name
-#   # image_name    = var.image_name
+module "ec2" {
+  source        = "../modules/ec2"
+  instance-type = var.instance-type
+  ports         = var.port
+  public-subnet = module.vpc.public_subnet_az1
+  key           = file("${path.module}/id_rsa.pub")
+  key_name      = var.key_name
+  # image_name    = var.image_name
 
-# }
+}
 
 # #creating the s3
 
-# module "s3" {
-#   source      = "../modules/s3"
-#   bucketname = var.bucketname
-#   s3env       = var.env
-# }
+module "s3" {
+  source      = "../modules/s3"
+  bucketname = var.bucketname
+  s3env       = var.env
+}
 
 # creating the rds
 
