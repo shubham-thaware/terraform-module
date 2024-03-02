@@ -14,7 +14,7 @@ resource "aws_vpc" "vpc" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
   tags = {
-    Name = "{var.env}-igw"
+    Name = "${var.env}-igw"
   }
 
 }
@@ -31,7 +31,7 @@ resource "aws_subnet" "public_subnet_az1" {
   availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
   tags = {
-    Name = "{var.env}-public-subnet1"
+    Name = "${var.env}-public-subnet1"
   }
 }
 
@@ -42,7 +42,7 @@ resource "aws_subnet" "public_subnet_az2" {
   availability_zone       = data.aws_availability_zones.available.names[1]
   map_public_ip_on_launch = true
   tags = {
-    Name = "{var.env}-public-subnet2"
+    Name = "${var.env}-public-subnet2"
   }
 }
 
@@ -97,7 +97,7 @@ resource "aws_eip" "nat-eip" {
   domain     = "vpc"
   depends_on = [aws_internet_gateway.igw]
   tags = {
-    Name = "{var.env}-eip"
+    Name = "${var.env}-eip"
   }
 }
 
@@ -107,7 +107,7 @@ resource "aws_nat_gateway" "natgateway" {
   allocation_id = aws_eip.nat-eip.id
   depends_on = [aws_eip.nat-eip]
   tags = {
-    Name = "{var.env}-natgatway"
+    Name = "${var.env}-natgatway"
   }
 }
 
@@ -116,7 +116,7 @@ resource "aws_route_table" "route-nat" {
   vpc_id     = aws_vpc.vpc.id
   #depends_on = aws_nat_gateway.natgatway.id
   route {
-    cidr_block = "0.0.0.0"
+    cidr_block = "10.0.0.0/16"
     gateway_id = aws_nat_gateway.natgateway.id
   }
   tags = {

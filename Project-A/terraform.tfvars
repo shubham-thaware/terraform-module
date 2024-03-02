@@ -1,5 +1,5 @@
 region              = "us-east-1"
-env                 = "dev"
+env                 = "Production"
 vpc_cidr            = "192.168.0.0/16"
 public_subnet_cidr1 = "192.168.0.0/24"
 public_subnet_cidr2 = "192.168.64.0/24"
@@ -11,4 +11,3 @@ key_name            = "mykey"
 # image_name          = ["ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2*"]
 #values for s3
 bucketname = "enternamehere"
-bucketenv =  "enterenvhere"

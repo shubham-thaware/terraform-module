@@ -18,7 +18,9 @@ variable "private_subnet2" {
 
 }
 variable "env" {
-
+  description = "requires env name like dev, qa, stage & prod"
+  type        = string
+  default     = "Production"
 }
 variable "instance-type" {
 
@@ -33,14 +35,14 @@ variable "key_name" {
 
 # }
 
-variable "bucketname"{
+variable "bucketname" {
   description = "requires unique name for s3 bucket "
-  type = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
-variable "bucketenv"{
-  description = "requires env name for s3 bucket like dev, qa, stage & prod"
-  type = string
-  default = ""
+variable "project" {
+  description = "requires project name for rds"
+  type        = string
+  default     = "myproject"
 }
