@@ -33,10 +33,8 @@ resource "aws_vpc" "vpc" {
 - #**private-subnet-cidr-1**# ---> (Required Public Subnet 1 CIDR, defualt name is '10.0.0.0/26')
 - #**private-subnet-cidr-2**# ---> (Required Public Subnet 2 CIDR, defualt name is '10.0.1.0/26')
 
-## Required variables for Route Tables
-
-
-
 ## Pre-define Output values for VPC as follows:
 - VPC ID
 - VPC ARN
+- All Public Subnets id
+- All Private Subnets id

@@ -47,6 +47,7 @@ resource "aws_subnet" "private-subnet-1" {
   cidr_block                                  = var.private-subnet-cidr-1
   availability_zone                           = "us-east-1a"
   enable_resource_name_dns_a_record_on_launch = true
+  map_public_ip_on_launch                     = false
   tags = merge(
     {
       Name = "${var.env}-private-subnet-1"
@@ -60,6 +61,7 @@ resource "aws_subnet" "private-subnet-2" {
   cidr_block                                  = var.private-subnet-cidr-2
   availability_zone                           = "us-east-1b"
   enable_resource_name_dns_a_record_on_launch = true
+  map_public_ip_on_launch                     = false
   tags = merge(
     {
       Name = "${var.env}-private-subnet-2"
@@ -80,9 +82,70 @@ resource "aws_internet_gateway" "igw" {
 resource "aws_internet_gateway_attachment" "igw-attachment-vpc" {
   internet_gateway_id = aws_internet_gateway.igw.id
   vpc_id              = aws_vpc.vpc.id
+  
 }
 
+#Nat Gateway
+resource "aws_eip" "nat_eip" {
+  tags = merge(
+    {
+      Name = "${var.env}-nat-eip"
+    }
+  )
+}
 
-provider "aws" {
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public-subnet-2.id
+  tags = merge(
+    {
+      Name = "${var.env}-nat-gateway"
+    }
+  )
+}
 
+#Route Tables
+resource "aws_route_table" "public-rtb" {
+  vpc_id = aws_vpc.vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = merge(
+    {
+      Name = "${var.env}-public-rtb"
+    }
+  )
+}
+
+resource "aws_route_table" "private-rtb" {
+  vpc_id = aws_vpc.vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat.id
+  }
+}
+
+# Route Table Association with subnets
+resource "aws_route_table_association" "public-rtb-1" {
+  subnet_id      = aws_subnet.public-subnet-1.id
+  route_table_id = aws_route_table.public-rtb.id
+}
+
+resource "aws_route_table_association" "public-rtb-2" {
+  subnet_id      = aws_subnet.public-subnet-2.id
+  route_table_id = aws_route_table.public-rtb.id
+}
+
+resource "aws_route_table_association" "private-rtb-1" {
+  subnet_id      = aws_subnet.private-subnet-1.id
+  route_table_id = aws_route_table.private-rtb.id
+}
+
+resource "aws_route_table_association" "private-rtb-2" {
+  subnet_id      = aws_subnet.private-subnet-2.id
+  route_table_id = aws_route_table.private-rtb.id
 }
