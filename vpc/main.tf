@@ -1,4 +1,4 @@
-#VPC 
+#Creating VPC 
 resource "aws_vpc" "vpc" {
   cidr_block           = var.vpc_cidr_block
   instance_tenancy     = "default"
@@ -6,14 +6,14 @@ resource "aws_vpc" "vpc" {
 
   tags = merge(
     {
-      Name = "${var.env}-${var.vpc_name}"
+      Name = "${var.vpc_name}-${var.env}"
     },
     var.additional_tags
   )
 
 }
 
-#Subnets
+#Creating Subnets 
 resource "aws_subnet" "public-subnet-1" {
   vpc_id                                      = aws_vpc.vpc.id
   cidr_block                                  = var.public-subnet-cidr-1
@@ -22,7 +22,7 @@ resource "aws_subnet" "public-subnet-1" {
   enable_resource_name_dns_a_record_on_launch = true
   tags = merge(
     {
-      Name = "${var.env}-public-subnet-1"
+      Name = "${var.vpc_name}-${var.env}-public-subnet-1"
     }
   )
 
@@ -36,7 +36,7 @@ resource "aws_subnet" "public-subnet-2" {
   enable_resource_name_dns_a_record_on_launch = true
   tags = merge(
     {
-      Name = "${var.env}-public-subnet-2"
+      Name = "${var.vpc_name}-${var.env}-public-subnet-2"
     }
   )
 
@@ -50,7 +50,7 @@ resource "aws_subnet" "private-subnet-1" {
   map_public_ip_on_launch                     = false
   tags = merge(
     {
-      Name = "${var.env}-private-subnet-1"
+      Name = "${var.vpc_name}-${var.env}-private-subnet-1"
     }
   )
 
@@ -64,17 +64,17 @@ resource "aws_subnet" "private-subnet-2" {
   map_public_ip_on_launch                     = false
   tags = merge(
     {
-      Name = "${var.env}-private-subnet-2"
+      Name = "${var.vpc_name}-${var.env}-private-subnet-2"
     }
   )
 }
 
-#Internet Gateway
+#Creating Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
   tags = merge(
     {
-      Name = "${var.env}-igw"
+      Name = "${var.vpc_name}-${var.env}-igw"
     }
   )
 }
@@ -82,14 +82,14 @@ resource "aws_internet_gateway" "igw" {
 resource "aws_internet_gateway_attachment" "igw-attachment-vpc" {
   internet_gateway_id = aws_internet_gateway.igw.id
   vpc_id              = aws_vpc.vpc.id
-  
+
 }
 
-#Nat Gateway
+#Creating Nat Gateway
 resource "aws_eip" "nat_eip" {
   tags = merge(
     {
-      Name = "${var.env}-nat-eip"
+      Name = "${var.vpc_name}-${var.env}-nat-eip"
     }
   )
 }
@@ -99,12 +99,12 @@ resource "aws_nat_gateway" "nat" {
   subnet_id     = aws_subnet.public-subnet-2.id
   tags = merge(
     {
-      Name = "${var.env}-nat-gateway"
+      Name = "${var.vpc_name}-${var.env}-nat-gateway"
     }
   )
 }
 
-#Route Tables
+#Creating Route Tables
 resource "aws_route_table" "public-rtb" {
   vpc_id = aws_vpc.vpc.id
 
@@ -115,7 +115,7 @@ resource "aws_route_table" "public-rtb" {
 
   tags = merge(
     {
-      Name = "${var.env}-public-rtb"
+      Name = "${var.vpc_name}-${var.env}-public-rtb"
     }
   )
 }
