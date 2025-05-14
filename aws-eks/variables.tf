@@ -24,3 +24,9 @@ variable "aws_eks_cluster_sg_ids" {
   description = "Security group ID for EKS control plane"
   type        = string
 }
+
+variable "cluster_endpoint_public_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}

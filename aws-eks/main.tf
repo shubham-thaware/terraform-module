@@ -7,11 +7,13 @@ resource "aws_eks_cluster" "cluster" {
     subnet_ids              = var.aws_vpc_private_subnet_ids
     endpoint_private_access = true
     endpoint_public_access  = false
+    public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
     security_group_ids      = [var.aws_eks_cluster_sg_ids]
   }
 
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy,
+    aws_iam_role_policy_attachment.eks_cluster_vpc_policy,
     aws_iam_role_policy_attachment.eks_service_policy
   ]
 }
@@ -26,10 +28,10 @@ resource "aws_eks_cluster" "cluster" {
 # EKS Node Group (1 t3.medium node)
 resource "aws_eks_node_group" "nodes" {
   cluster_name    = aws_eks_cluster.cluster.name
-  node_group_name = "${var.aws_eks_cluster_name}-eks-node-groups"
+  node_group_name = "${var.aws_eks_cluster_name}-eks-node-group"
   node_role_arn   = aws_iam_role.eks_nodes.arn
   subnet_ids      = var.aws_vpc_private_subnet_ids
-
+ #version         = var.aws_eks_cluster_version (optional)
   instance_types  = ["t3.medium"]        # Changed from t2.medium
   ami_type        = "AL2_x86_64"         # Optional: Use Amazon Linux 2 for better compatibility
 
@@ -45,4 +47,7 @@ resource "aws_eks_node_group" "nodes" {
     aws_iam_role_policy_attachment.eks_cni_policy,
     aws_iam_role_policy_attachment.ec2_container_registry_readonly,
   ]
+  tags = {
+    name      = "${var.aws_eks_cluster_name}-eks-node-group"
+  }
 }
