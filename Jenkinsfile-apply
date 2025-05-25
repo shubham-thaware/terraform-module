@@ -1,26 +1,22 @@
 pipeline {
   agent any
-  parameters {
-    string(name: 'environment', defaultValue: 'dev', description: 'Environment')
-  }
   environment {
-    GITHUB_CREDENTIALS = credentials('github-ssh')
-    REPO_URL = 'git@github.com:your-org/terraform-aws-infra.git'
+    GIT_CREDENTIALS = credentials('github')
   }
   stages {
-    stage('Checkout Merged Branch') {
+    stage('Clone Repo') {
       steps {
-        git branch: 'main', credentialsId: env.GITHUB_CREDENTIALS, url: env.REPO_URL
+        git credentialsId: "${env.GIT_CREDENTIALS}", url: 'https://github.com/shubham-thaware/terraform-module.git', branch: 'main'
       }
     }
 
     stage('Terraform Init & Apply') {
       steps {
-        dir("environments/${params.environment}") {
-          sh """
-          terraform init -backend-config=../backend.tfvars
+        dir('environments/dev') {
+          sh '''
+          terraform init
           terraform apply -auto-approve -var-file=terraform.auto.tfvars
-          """
+          '''
         }
       }
     }
