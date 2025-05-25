@@ -1,3 +1,4 @@
+provider "aws" {}
 module "vpc" {
   source         = "../../aws-vpc"
   env            = var.env
