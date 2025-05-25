@@ -30,11 +30,16 @@ pipeline {
 
     stage('Terraform Init & Plan') {
       steps {
-        dir("environments/${params.environment}") {
-          sh """
-          terraform init -backend-config=../backend.tfvars
-          terraform plan -var-file=terraform.auto.tfvars -out=tfplan > plan.out
-          """
+        withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+          dir('environments/dev') {
+            sh '''
+            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+            terraform init
+            terraform plan -var-file=terraform.auto.tfvars -out=tfplan.out
+            '''
+          }
         }
       }
     }
