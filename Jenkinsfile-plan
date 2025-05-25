@@ -58,15 +58,19 @@ pipeline {
 
     stage('Create PR on GitHub') {
       steps {
-        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-          sh """
+      // Read the terraform plan output file content into a Groovy variable
+      def planContent = readFile("environments/${params.environment}/plan.out")
+
+      withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+        // Use triple double quotes for the shell block
+        sh """
           gh auth login --with-token <<< "$GITHUB_TOKEN"
-          gh pr create \
-            --title "Add VPC ${params.vpc_name}" \
-            --body "Terraform Plan:\n\`\`\`\n$(cat environments/${params.environment}/plan.out)\n\`\`\`" \
-            --base main \
+          gh pr create \\
+            --title "Add VPC ${params.vpc_name}" \\
+            --body 'Terraform Plan:\\n\\n\`\`\`\\n${planContent}\\n\`\`\`' \\
+            --base main \\
             --head ${BRANCH_NAME}
-          """
+        """
         }
       }
     }
