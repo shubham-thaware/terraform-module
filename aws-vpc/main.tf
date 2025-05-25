@@ -80,11 +80,12 @@ resource "aws_internet_gateway" "igw" {
   )
 }
 
-resource "aws_internet_gateway_attachment" "igw-attachment-vpc" {
-  internet_gateway_id = aws_internet_gateway.igw.id
-  vpc_id              = aws_vpc.vpc.id
+# # Remove the aws_internet_gateway_attachment resource
+# resource "aws_internet_gateway_attachment" "igw-attachment-vpc" {
+#   internet_gateway_id = aws_internet_gateway.igw.id
+#   vpc_id              = aws_vpc.vpc.id
 
-}
+# }
 
 #Creating Nat Gateway
 resource "aws_eip" "nat_eip" {

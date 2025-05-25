@@ -18,9 +18,6 @@ variable "vpc_cidr_block" {
 variable "additional_tags" {
   description = "Additional tags values are optional, pass as a map"
   type        = map(string)
-  default = {
-    Project = "project"
-  }
 }
 
 #Subnet variables
