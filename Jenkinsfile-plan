@@ -58,17 +58,20 @@ pipeline {
 
     stage('Create PR on GitHub') {
       steps {
-      // Read the terraform plan output file content into a Groovy variable
+      // Read the plan content as a Groovy string
       def planContent = readFile("environments/${params.environment}/plan.out")
+      
+      // Escape backticks and double quotes for GitHub Markdown formatting
+      def escapedPlan = planContent.replace("`", "\\`").replace("\"", "\\\"")
 
       withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-        // Use triple double quotes for the shell block
+        // Authenticate and create the PR using Groovy-friendly format
         sh """
-          gh auth login --with-token <<< "$GITHUB_TOKEN"
-          gh pr create \\
-            --title "Add VPC ${params.vpc_name}" \\
-            --body 'Terraform Plan:\\n\\n\`\`\`\\n${planContent}\\n\`\`\`' \\
-            --base main \\
+          echo "$GITHUB_TOKEN" | gh auth login --with-token
+          gh pr create \
+            --title "Add VPC ${params.vpc_name}" \
+            --body "Terraform Plan:\\n\\n\\\`\\\`\\\`\\n${escapedPlan}\\n\\\`\\\`\\\`" \
+            --base main \
             --head ${BRANCH_NAME}
         """
         }
