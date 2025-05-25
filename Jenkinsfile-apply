@@ -1,0 +1,28 @@
+pipeline {
+  agent any
+  parameters {
+    string(name: 'environment', defaultValue: 'dev', description: 'Environment')
+  }
+  environment {
+    GITHUB_CREDENTIALS = credentials('github-ssh')
+    REPO_URL = 'git@github.com:your-org/terraform-aws-infra.git'
+  }
+  stages {
+    stage('Checkout Merged Branch') {
+      steps {
+        git branch: 'main', credentialsId: env.GITHUB_CREDENTIALS, url: env.REPO_URL
+      }
+    }
+
+    stage('Terraform Init & Apply') {
+      steps {
+        dir("environments/${params.environment}") {
+          sh """
+          terraform init -backend-config=../backend.tfvars
+          terraform apply -auto-approve -var-file=terraform.auto.tfvars
+          """
+        }
+      }
+    }
+  }
+}

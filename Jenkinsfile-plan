@@ -1,0 +1,69 @@
+pipeline {
+  agent any
+  parameters {
+    string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
+    string(name: 'cidr_block', defaultValue: '10.0.0.0/16', description: 'CIDR Block')
+    string(name: 'environment', defaultValue: 'dev', description: 'Environment')
+  }
+  environment {
+    GITHUB_CREDENTIALS = credentials('github-ssh')
+    REPO_URL = 'git@github.com:your-org/terraform-aws-infra.git'
+    BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER}"
+  }
+  stages {
+    stage('Checkout') {
+      steps {
+        git credentialsId: env.GITHUB_CREDENTIALS, url: env.REPO_URL
+      }
+    }
+
+    stage('Create Branch & tfvars') {
+      steps {
+        sh """
+        git checkout -b ${BRANCH_NAME}
+        echo 'vpc_name = "${params.vpc_name}"' > environments/${params.environment}/terraform.auto.tfvars
+        echo 'cidr_block = "${params.cidr_block}"' >> environments/${params.environment}/terraform.auto.tfvars
+        echo "env        = \"${params.env}\"" >> environments/dev/terraform.auto.tfvars
+        """
+      }
+    }
+
+    stage('Terraform Init & Plan') {
+      steps {
+        dir("environments/${params.environment}") {
+          sh """
+          terraform init -backend-config=../backend.tfvars
+          terraform plan -var-file=terraform.auto.tfvars -out=tfplan > plan.out
+          """
+        }
+      }
+    }
+
+    stage('Commit & Push Branch') {
+      steps {
+        sh """
+        git config user.name "Jenkins"
+        git config user.email "jenkins@yourdomain.com"
+        git add .
+        git commit -m "Add VPC ${params.vpc_name}"
+        git push origin ${BRANCH_NAME}
+        """
+      }
+    }
+
+    stage('Create PR on GitHub') {
+      steps {
+        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+          sh """
+          gh auth login --with-token <<< "$GITHUB_TOKEN"
+          gh pr create \
+            --title "Add VPC ${params.vpc_name}" \
+            --body "Terraform Plan:\n\`\`\`\n$(cat environments/${params.environment}/plan.out)\n\`\`\`" \
+            --base main \
+            --head ${BRANCH_NAME}
+          """
+        }
+      }
+    }
+  }
+}
