@@ -3,3 +3,4 @@
 terraform.auto.tfvars
 .plan
 .terraform/
+*.terraform.lock.hcl
