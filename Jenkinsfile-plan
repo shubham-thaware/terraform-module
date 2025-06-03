@@ -67,7 +67,7 @@ pipeline {
                 }
 
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                    withEnv(["GITHUB_TOKEN=${GITHUB_TOKEN}"]) {
+                    withEnv(["GITHUB_TOKEN=${env.GITHUB_TOKEN}"]) {
                         sh """
                         gh auth login --with-token
                         gh pr create \
