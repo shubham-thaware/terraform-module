@@ -49,9 +49,9 @@ EOF
               fi
 
               #Safe substitution of variables into tfvars file
-              vpc_val='${params.vpc_name}'
-              env_val='${params.env}'
-              sed "s|\\\${vpc_name}|\$vpc_val|g; s|\\\${env}|\$env_val|g" terraform.tfvars.template > \$tfDir/terraform.tfvars
+              vpc_val=$(printf '%s' "${params.vpc_name}" | sed 's/\\/\\\\/g')
+              env_val=$(printf '%s' "${params.env}" | sed 's/\\/\\\\/g')
+              sed "s|\\\${vpc_name}|${vpc_val}|g; s|\\\${env}|${env_val}|g" terraform.tfvars.template > "$tfDir/terraform.tfvars"
 
               cd \$tfDir
 
