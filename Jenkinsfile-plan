@@ -39,19 +39,19 @@ pipeline {
               tfDir="environments/${params.env}"
               mkdir -p \$tfDir
 
-              # Check if template file exists; if not, create a default one
+              # Create a clean template if it doesn't exist
               if [ ! -f terraform.tfvars.template ]; then
                 echo "⚠️ terraform.tfvars.template not found, creating default template..."
                 cat <<EOF > terraform.tfvars.template
-vpc_name = "\\${vpc_name}"
-env      = "\\${env}"
+vpc_name = "__VPC_NAME__"
+env      = "__ENV__"
 EOF
               fi
 
-              #Safe substitution of variables into tfvars file
-              vpc_val=$(printf '%s' "${params.vpc_name}" | sed 's/\\/\\\\/g')
-              env_val=$(printf '%s' "${params.env}" | sed 's/\\/\\\\/g')
-              sed "s|\\\${vpc_name}|${vpc_val}|g; s|\\\${env}|${env_val}|g" terraform.tfvars.template > "$tfDir/terraform.tfvars"
+              # Safe substitution of variables into tfvars file
+              vpc_val=\$(printf '%s' '${params.vpc_name}' | sed 's/\\\\/\\\\\\\\/g')
+              env_val=\$(printf '%s' '${params.env}' | sed 's/\\\\/\\\\\\\\/g')
+              sed "s|__VPC_NAME__|\$vpc_val|g; s|__ENV__|\$env_val|g" terraform.tfvars.template > "\$tfDir/terraform.tfvars"
 
               cd \$tfDir
 
