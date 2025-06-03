@@ -4,6 +4,7 @@ pipeline {
     parameters {
         string(name: 'env', defaultValue: 'dev', description: 'Environment to destroy (dev/stage/prod)')
         string(name: 'vpc_name', description: 'VPC name used in resources')
+        string(name: 'cidr_block', defaultValue: '10.0.0.0/16', description: 'CIDR block for VPC')
     }
 
     environment {
@@ -35,6 +36,7 @@ pipeline {
 
                         terraform destroy \
                           -var="env=${env}" \
+                          -var="cidr_block=${cidr_block}" \
                           -var="vpc_name=${vpc_name}" \
                           -auto-approve
                         '''
