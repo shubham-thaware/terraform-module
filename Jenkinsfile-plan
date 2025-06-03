@@ -37,6 +37,9 @@ pipeline {
             sh(
               script: '''
                 set -e
+                export TF_ENV="${TF_ENV}"
+                export TF_VPC_NAME="${TF_VPC_NAME}"
+
                 echo "📁 Preparing Terraform directory..."
                 tfDir="environments/${TF_ENV}"
                 mkdir -p "$tfDir"
@@ -44,9 +47,9 @@ pipeline {
                 if [ ! -f terraform.tfvars.template ]; then
                   echo "⚠️ terraform.tfvars.template not found, creating default..."
                   cat <<EOF > terraform.tfvars.template
-vpc_name = "__VPC_NAME__"
-env      = "__ENV__"
-EOF
+            vpc_name = "__VPC_NAME__"
+            env      = "__ENV__"
+            EOF
                 fi
 
                 echo "📝 Generating terraform.tfvars from template..."
