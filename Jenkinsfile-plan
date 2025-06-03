@@ -29,8 +29,8 @@ pipeline {
               $class: 'GitSCM',
               branches: [[name: 'main']],
               userRemoteConfigs: [[
-                url: 'git@github.com:your-org/your-repo.git',
-                credentialsId: 'github-ssh-credentials'
+                url: 'https://github.com/shubham-thaware/terraform-module.git',
+                credentialsId: 'github'
               ]]
             ]
             
