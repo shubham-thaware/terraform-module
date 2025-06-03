@@ -8,15 +8,14 @@ pipeline {
     }
 
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
         REPO_URL = 'https://github.com/shubham-thaware/terraform-module.git'
-        BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER}"
+        BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER ?: '001'}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', credentialsId: 'github', url: 'https://github.com/shubham-thaware/terraform-module.git'
+                git branch: 'main', credentialsId: 'github', url: "${REPO_URL}"
             }
         }
 
@@ -66,17 +65,18 @@ pipeline {
                     def bodyContent = "Terraform Plan:\n\n${planContent}"
                     writeFile file: 'pr-body.md', text: bodyContent
                 }
-        
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                    sh """
-                    echo "$GITHUB_TOKEN" | gh auth login --with-token
-                    gh pr create \
-                        --title "Add VPC ${params.vpc_name}" \
-                        --body-file pr-body.md \
-                        --base main \
-                        --head ${BRANCH_NAME}
-                    """
 
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    withEnv(["GITHUB_TOKEN=${GITHUB_TOKEN}"]) {
+                        sh """
+                        gh auth login --with-token
+                        gh pr create \
+                            --title "Add VPC ${params.vpc_name}" \
+                            --body-file pr-body.md \
+                            --base main \
+                            --head ${BRANCH_NAME}
+                        """
+                    }
                 }
             }
         }
