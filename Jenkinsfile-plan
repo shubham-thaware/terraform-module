@@ -1,80 +1,94 @@
 pipeline {
-  agent any
+    agent any
 
-  parameters {
-    string(name: 'ENVIRONMENT', defaultValue: 'stage', description: 'Environment to deploy (dev, qa, stage, prod)')
-    string(name: 'VPC_NAME', defaultValue: 'app', description: 'VPC Name')
-  }
-
-  environment {
-    AWS_ACCESS_KEY_ID     = credentials('aws-credentials') // Updated credential ID
-    AWS_SECRET_ACCESS_KEY = credentials('aws-credentials')
-    GITHUB_TOKEN          = credentials('github')
-    REPO_URL              = 'https://github.com/shubham-thaware/terraform-module.git'
-    GH_TOKEN              = credentials('github') // For GitHub CLI auth
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    parameters {
+        string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
+        string(name: 'cidr_block', defaultValue: '10.0.0.0/16', description: 'CIDR Block')
+        string(name: 'environment', defaultValue: 'dev', description: 'Environment')
     }
 
-    stage('Prepare Terraform files and plan') {
-      steps {
-        script {
-          def envDir = "environments/${params.ENVIRONMENT}"
-          def tfvarsFile = "${envDir}/terraform.tfvars"
-          def tfplan = "tfplan-${params.ENVIRONMENT}.out"
-          def planBranch = "plan-${params.ENVIRONMENT}-${BUILD_NUMBER}"
+    environment {
+        REPO_URL = 'https://github.com/shubham-thaware/terraform-module.git'
+        BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER ?: '001'}"
+    }
 
-          sh """
-            echo 📁 Creating directory: ${envDir}
-            mkdir -p ${envDir}
-          """
-
-          sh """
-            echo 📝 Generating terraform.tfvars from template...
-            sed 's|__VPC_NAME__|${params.VPC_NAME}|g; s|__ENV__|${params.ENVIRONMENT}|g' terraform.tfvars.template > ${tfvarsFile}
-          """
-
-          // Copy Terraform configuration files
-          sh "cp -r ./*.tf ${envDir}/"
-
-          dir(envDir) {
-            sh '''
-              echo 🧪 Running terraform init...
-              terraform init -input=false
-
-              echo 🧠 Running terraform plan...
-              terraform plan -input=false -var-file=terraform.tfvars -out=tfplan.out
-
-              echo 📄 Converting plan to JSON...
-              terraform show -json tfplan.out > tfplan.json
-            '''
-          }
-
-          // Create new branch, commit tfplan.json and push
-          sh """
-            echo 🔧 Setting up Git
-            git config --global user.email "jenkins@ci"
-            git config --global user.name "jenkins"
-
-            git checkout -b ${planBranch}
-            git add ${envDir}/tfplan.json
-            git commit -m "Terraform plan for ${params.ENVIRONMENT} [CI Build #${BUILD_NUMBER}]"
-            git push ${REPO_URL} HEAD:${planBranch}
-          """
-
-          // Create Pull Request using GitHub CLI
-          sh """
-            echo 🚀 Creating Pull Request on GitHub...
-            echo "$GITHUB_TOKEN" | gh auth login --with-token
-            gh pr create --title "Terraform Plan for ${params.ENVIRONMENT} [CI Build #${BUILD_NUMBER}]" --body "Auto-generated Terraform plan for review." --base main --head ${planBranch}
-          """
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
         }
-      }
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', credentialsId: 'github', url: "${REPO_URL}"
+            }
+        }
+
+        stage('Create Branch & Write tfvars') {
+            steps {
+                sh '''#!/bin/bash
+                git checkout -b "${BRANCH_NAME}"
+
+                mkdir -p environments/"${environment}"
+
+                cat > environments/${environment}/terraform.auto.tfvars <<EOF
+vpc_name   = "${vpc_name}"
+cidr_block = "${cidr_block}"
+env        = "${environment}"
+EOF
+                '''
+            }
+        }
+
+        stage('Terraform Init & Plan') {
+            steps {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                    dir("environments/${params.environment}") {
+                        sh '''#!/bin/bash
+                        terraform init
+                        terraform plan -var-file=terraform.auto.tfvars -out=tfplan.out
+                        terraform show -no-color tfplan.out > tfplan.txt
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Commit & Push Branch') {
+            steps {
+                sh '''#!/bin/bash
+                git config user.name "Jenkins"
+                git config user.email "jenkins@testdomain.com"
+                git add .
+                git commit -m "Add VPC ${vpc_name}"
+                git push origin "${BRANCH_NAME}"
+                '''
+            }
+        }
+
+        stage('Create PR on GitHub') {
+            steps {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh '''#!/bin/bash
+                    PR_BODY=$(base64 environments/${environment}/tfplan.txt | tr -d '\\n')
+
+                    cat > pr-body.json <<EOF
+{
+  "title": "Add VPC ${vpc_name}",
+  "body": "Terraform Plan Output (base64):\\n${PR_BODY}",
+  "head": "${BRANCH_NAME}",
+  "base": "main"
+}
+EOF
+
+                    curl -X POST -H "Authorization: token $GITHUB_TOKEN" \\
+                         -H "Accept: application/vnd.github.v3+json" \\
+                         https://api.github.com/repos/shubham-thaware/terraform-module/pulls \\
+                         -d @pr-body.json
+                    '''
+                }
+            }
+        }
     }
-  }
 }
