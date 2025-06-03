@@ -11,7 +11,7 @@ pipeline {
         REPO_URL = 'https://github.com/shubham-thaware/terraform-module.git'
         BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER ?: '001'}"
     }
-	
+
     stages {
         stage('Clean Workspace') {
             steps {
@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        stage('Checkout') {  
+        stage('Checkout') {
             steps {
                 git branch: 'main', credentialsId: 'github', url: "${REPO_URL}"
             }
@@ -27,12 +27,17 @@ pipeline {
 
         stage('Create Branch & tfvars') {
             steps {
-                sh """
-                git checkout -b ${BRANCH_NAME}
-                echo 'vpc_name = "${params.vpc_name}"' > environments/${params.environment}/terraform.auto.tfvars
-                echo 'cidr_block = "${params.cidr_block}"' >> environments/${params.environment}/terraform.auto.tfvars
-                echo 'env = "${params.environment}"' >> environments/${params.environment}/terraform.auto.tfvars
-                """
+                sh '''#!/bin/bash
+                git checkout -b "$BRANCH_NAME"
+
+                mkdir -p environments/"${environment}"
+
+                cat <<EOF > environments/${environment}/terraform.auto.tfvars
+vpc_name = "${vpc_name}"
+cidr_block = "${cidr_block}"
+env = "${environment}"
+EOF
+                '''
             }
         }
 
@@ -40,13 +45,14 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     dir("environments/${params.environment}") {
-                        sh """
+                        sh '''#!/bin/bash
                         export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                         export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
                         terraform init
                         terraform plan -var-file=terraform.auto.tfvars -out=tfplan.out
-                        """
+                        terraform show -no-color tfplan.out > tfplan.txt
+                        '''
                     }
                 }
             }
@@ -54,38 +60,38 @@ pipeline {
 
         stage('Commit & Push Branch') {
             steps {
-                sh """
+                sh '''#!/bin/bash
                 git config user.name "Jenkins"
                 git config user.email "jenkins@testdomain.com"
                 git add .
-                git commit -m "Add VPC ${params.vpc_name}"
-                git push origin ${BRANCH_NAME}
-                """
+                git commit -m "Add VPC ${vpc_name}"
+                git push origin "$BRANCH_NAME"
+                '''
             }
         }
 
-	stage('Create PR on GitHub') {
-	    steps {
-	        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-	            sh '''#!/bin/bash
-	            PR_BODY=$(cat environments/${environment}/tfplan.out | base64)
-	
-	            cat <<EOF > pr-body.json
-	            {
-	                "title": "Add VPC ${vpc_name}",
-	                "body": "${PR_BODY}",
-	                "head": "feature/vpc-${vpc_name}-${BUILD_NUMBER:-001}",
-	                "base": "main"
-	            }
-	EOF
-	
-	            curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
-	                 -H "Accept: application/vnd.github.v3+json" \
-	                 https://api.github.com/repos/shubham-thaware/terraform-module/pulls \
-	                 -d @pr-body.json
-	            '''
-	        }
-	    }
-	}
+        stage('Create PR on GitHub') {
+            steps {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh '''#!/bin/bash
+                    PR_BODY=$(base64 environments/${environment}/tfplan.txt | tr -d '\n')
+
+                    cat <<EOF > pr-body.json
+{
+  "title": "Add VPC ${vpc_name}",
+  "body": "Terraform Plan Output (base64):\\n${PR_BODY}",
+  "head": "${BRANCH_NAME}",
+  "base": "main"
+}
+EOF
+
+                    curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                         -H "Accept: application/vnd.github.v3+json" \
+                         https://api.github.com/repos/shubham-thaware/terraform-module/pulls \
+                         -d @pr-body.json
+                    '''
+                }
+            }
+        }
     }
 }
