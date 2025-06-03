@@ -1,3 +1,3 @@
-vpc_name   = ""
-cidr_block = "10.0.0.0/16"
-env        = "dev"  
+vpc_name   = "${vpc_name}"
+cidr_block = "${cidr_block}"
+env        = "${env}"  
