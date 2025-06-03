@@ -11,6 +11,13 @@ pipeline {
         REPO_URL = 'https://github.com/shubham-thaware/terraform-module.git'
         BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER ?: '001'}"
     }
+	
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
 
     stages {
         stage('Checkout') {
