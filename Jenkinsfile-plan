@@ -40,7 +40,7 @@ pipeline {
           """
 
           // Copy Terraform configuration files
-          sh "cp -r terraform/* ${envDir}/"
+          sh "cp -r ./*.tf ${envDir}/"
 
           dir(envDir) {
             sh '''
