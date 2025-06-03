@@ -33,14 +33,16 @@ pipeline {
               ]]
             ]
 
-            // Export Jenkins parameters into env vars before sh block
-            withEnv(["TF_ENV=${params.env}", "TF_VPC_NAME=${params.vpc_name}"]) {
+            // Avoid referencing Jenkins objects inside shell script
+            def tfEnv = "${params.env}"
+            def tfVpc = "${params.vpc_name}"
+
+            withEnv(["TF_ENV=${tfEnv}", "TF_VPC_NAME=${tfVpc}"]) {
               sh '''
                 set -e
                 tfDir="environments/${TF_ENV}"
                 mkdir -p "$tfDir"
 
-                # Create default template if missing
                 if [ ! -f terraform.tfvars.template ]; then
                   echo "⚠️ terraform.tfvars.template not found, creating default..."
                   cat <<EOF > terraform.tfvars.template
@@ -49,7 +51,6 @@ env      = "__ENV__"
 EOF
                 fi
 
-                # Replace placeholders safely
                 sed "s|__VPC_NAME__|$TF_VPC_NAME|g; s|__ENV__|$TF_ENV|g" terraform.tfvars.template > "$tfDir/terraform.tfvars"
 
                 cd "$tfDir"
@@ -62,7 +63,6 @@ EOF
 
                 cd ../../
 
-                # Git setup
                 git config user.name "jenkins-bot"
                 git config user.email "jenkins@example.com"
 
