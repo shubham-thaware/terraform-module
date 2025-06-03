@@ -1,84 +1,81 @@
 pipeline {
-  agent any
-  parameters {
-    string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
-    string(name: 'cidr_block', defaultValue: '10.0.0.0/16', description: 'CIDR Block')
-    string(name: 'environment', defaultValue: 'dev', description: 'Environment')
-  }
-  environment {
-    GITHUB_CREDENTIALS = credentials('github')
-    REPO_URL = 'git@github.com/shubham-thaware/terraform-module.git'
-    BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER}"
-  }
-  stages {
-    stage('Checkout') {
-      steps {
-        git credentialsId: env.GITHUB_CREDENTIALS, url: env.REPO_URL
-      }
+    agent any
+
+    parameters {
+        string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
+        string(name: 'cidr_block', defaultValue: '10.0.0.0/16', description: 'CIDR Block')
+        string(name: 'environment', defaultValue: 'dev', description: 'Environment')
     }
 
-    stage('Create Branch & tfvars') {
-      steps {
-        sh """
-        git checkout -b ${BRANCH_NAME}
-        echo 'vpc_name = "${params.vpc_name}"' > environments/${params.environment}/terraform.auto.tfvars
-        echo 'cidr_block = "${params.cidr_block}"' >> environments/${params.environment}/terraform.auto.tfvars
-        echo "env        = \"${params.env}\"" >> environments/dev/terraform.auto.tfvars
-        """
-      }
+    environment {
+        GITHUB_CREDENTIALS = credentials('github')
+        REPO_URL = 'git@github.com/shubham-thaware/terraform-module.git'
+        BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER}"
     }
 
-    stage('Terraform Init & Plan') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-          dir('environments/dev') {
-            sh '''
-            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-
-            terraform init
-            terraform plan -var-file=terraform.auto.tfvars -out=tfplan.out
-            '''
-          }
+    stages {
+        stage('Checkout') {
+            steps {
+                git credentialsId: env.GITHUB_CREDENTIALS, url: env.REPO_URL
+            }
         }
-      }
-    }
 
-    stage('Commit & Push Branch') {
-      steps {
-        sh """
-        git config user.name "Jenkins"
-        git config user.email "jenkins@testdomain.com"
-        git add .
-        git commit -m "Add VPC ${params.vpc_name}"
-        git push origin ${BRANCH_NAME}
-        """
-      }
-    }
-
-    stage('Create PR on GitHub') {
-      steps {
-      def planContent = readFile("environments/${params.environment}/tfplan.out")
-      def bodyContent = """Terraform Plan:
-
-\`\`\`
-${planContent}
-\`\`\`
-"""
-      writeFile file: 'pr-body.md', text: bodyContent
-
-      withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-        sh '''
-          echo "$GITHUB_TOKEN" | gh auth login --with-token
-          gh pr create \
-            --title "Add VPC ${params.vpc_name}" \
-            --body-file pr-body.md \
-            --base main \
-            --head ${BRANCH_NAME}
-        '''--head ${BRANCH_NAME}
-        """
+        stage('Create Branch & tfvars') {
+            steps {
+                sh """
+                git checkout -b ${BRANCH_NAME}
+                echo 'vpc_name = "${params.vpc_name}"' > environments/${params.environment}/terraform.auto.tfvars
+                echo 'cidr_block = "${params.cidr_block}"' >> environments/${params.environment}/terraform.auto.tfvars
+                echo 'env = "${params.environment}"' >> environments/${params.environment}/terraform.auto.tfvars
+                """
+            }
         }
-      }
+
+        stage('Terraform Init & Plan') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    dir("environments/${params.environment}") {
+                        sh """
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+                        terraform init
+                        terraform plan -var-file=terraform.auto.tfvars -out=tfplan.out
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Commit & Push Branch') {
+            steps {
+                sh """
+                git config user.name "Jenkins"
+                git config user.email "jenkins@testdomain.com"
+                git add .
+                git commit -m "Add VPC ${params.vpc_name}"
+                git push origin ${BRANCH_NAME}
+                """
+            }
+        }
+
+        stage('Create PR on GitHub') {
+            steps {
+                def planContent = readFile("environments/${params.environment}/tfplan.out")
+                def bodyContent = "Terraform Plan:\n\n${planContent}"
+                writeFile file: 'pr-body.md', text: bodyContent
+
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh """
+                    echo "$GITHUB_TOKEN" | gh auth login --with-token
+                    gh pr create \
+                        --title "Add VPC ${params.vpc_name}" \
+                        --body-file pr-body.md \
+                        --base main \
+                        --head ${BRANCH_NAME}
+                    """
+                }
+            }
+        }
     }
-  }
 }
