@@ -129,6 +129,12 @@ resource "aws_route_table" "private-rtb" {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat.id
   }
+
+  tags = merge(
+    {
+      Name = "${var.vpc_name}-${var.env}-private-rtb"
+    }
+  )
 }
 
 # Route Table Association with subnets
