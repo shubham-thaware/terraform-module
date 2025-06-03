@@ -67,16 +67,14 @@ pipeline {
                 }
 
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                    withEnv(["GITHUB_TOKEN=${env.GITHUB_TOKEN}"]) {
-                        sh """
-                        gh auth login --with-token
-                        gh pr create \
-                            --title "Add VPC ${params.vpc_name}" \
-                            --body-file pr-body.md \
-                            --base main \
-                            --head ${BRANCH_NAME}
-                        """
-                    }
+                    sh """
+                    gh auth login --hostname github.com --with-token <<< "$GITHUB_TOKEN"
+                    gh pr create \
+                        --title "Add VPC ${params.vpc_name}" \
+                        --body-file pr-body.md \
+                        --base main \
+                        --head ${BRANCH_NAME}
+                    """
                 }
             }
         }
