@@ -25,17 +25,17 @@ pipeline {
             }
         }
 
-        stage('Create Branch & tfvars') {
+        stage('Create Branch & Write tfvars') {
             steps {
                 sh '''#!/bin/bash
-                git checkout -b "$BRANCH_NAME"
+                git checkout -b "${BRANCH_NAME}"
 
                 mkdir -p environments/"${environment}"
 
-                cat <<EOF > environments/${environment}/terraform.auto.tfvars
-vpc_name = "${vpc_name}"
+                cat > environments/${environment}/terraform.auto.tfvars <<EOF
+vpc_name   = "${vpc_name}"
 cidr_block = "${cidr_block}"
-env = "${environment}"
+env        = "${environment}"
 EOF
                 '''
             }
@@ -43,12 +43,9 @@ EOF
 
         stage('Terraform Init & Plan') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
                     dir("environments/${params.environment}") {
                         sh '''#!/bin/bash
-                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-
                         terraform init
                         terraform plan -var-file=terraform.auto.tfvars -out=tfplan.out
                         terraform show -no-color tfplan.out > tfplan.txt
@@ -65,7 +62,7 @@ EOF
                 git config user.email "jenkins@testdomain.com"
                 git add .
                 git commit -m "Add VPC ${vpc_name}"
-                git push origin "$BRANCH_NAME"
+                git push origin "${BRANCH_NAME}"
                 '''
             }
         }
@@ -74,9 +71,9 @@ EOF
             steps {
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     sh '''#!/bin/bash
-                    PR_BODY=$(base64 environments/${environment}/tfplan.txt | tr -d '\n')
+                    PR_BODY=$(base64 environments/${environment}/tfplan.txt | tr -d '\\n')
 
-                    cat <<EOF > pr-body.json
+                    cat > pr-body.json <<EOF
 {
   "title": "Add VPC ${vpc_name}",
   "body": "Terraform Plan Output (base64):\\n${PR_BODY}",
@@ -85,9 +82,9 @@ EOF
 }
 EOF
 
-                    curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
-                         -H "Accept: application/vnd.github.v3+json" \
-                         https://api.github.com/repos/shubham-thaware/terraform-module/pulls \
+                    curl -X POST -H "Authorization: token $GITHUB_TOKEN" \\
+                         -H "Accept: application/vnd.github.v3+json" \\
+                         https://api.github.com/repos/shubham-thaware/terraform-module/pulls \\
                          -d @pr-body.json
                     '''
                 }
