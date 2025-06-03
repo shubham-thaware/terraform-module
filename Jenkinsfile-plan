@@ -2,8 +2,8 @@ pipeline {
   agent any
 
   parameters {
-    string(name: 'vpc_name', description: 'VPC Name (e.g. weather-app)')
-    string(name: 'env', description: 'Environment Name (e.g. dev, prod, stage, qa)')
+    string(name: 'vpc_name', description: 'VPC Name')
+    string(name: 'env', description: 'Environment (dev, prod, stage, qa)')
   }
 
   environment {
@@ -11,61 +11,73 @@ pipeline {
   }
 
   stages {
-    stage('Prepare Environment Folder') {
+    stage('Prepare Terraform files and plan') {
       steps {
-        script {
-          def targetDir = "${BASE_DIR}/${params.env}"
-          sh """
-            echo "📁 Creating environment directory if not exists..."
-            mkdir -p ${targetDir}
-            
-            echo "📄 Copying terraform.tfvars.template if missing..."
-            if [ ! -f ${targetDir}/terraform.tfvars.template ]; then
-              cp ${BASE_DIR}/dev/terraform.tfvars.template ${targetDir}/
-            fi
-          """
-        }
-      }
-    }
-
-    stage('Generate Terraform Plan') {
-      steps {
-        withCredentials([[
-          $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-credentials',
-          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]]) {
+        withCredentials([
+          [$class: 'AmazonWebServicesCredentialsBinding',
+           credentialsId: 'aws-credentials',
+           accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'],
+          string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
+        ]) {
           script {
+            def branchName = "plan-${params.env}-${env.BUILD_NUMBER}"
             def tfDir = "${BASE_DIR}/${params.env}"
-            dir(tfDir) {
-              sh """
-                set -e
-                echo "📄 Preparing terraform.tfvars from template..."
-                sed -e "s|\\\${vpc_name}|${params.vpc_name}|g" \\
-                    -e "s|\\\${env}|${params.env}|g" terraform.tfvars.template > terraform.tfvars
-
-                echo "📦 Running terraform init..."
-                terraform init -input=false
-
-                echo "🧠 Creating terraform plan..."
-                terraform plan -input=false -var-file=terraform.tfvars -out=tfplan.out
-              """
-              archiveArtifacts artifacts: 'tfplan.out,terraform.tfvars', fingerprint: true
-            }
+            
+            // Checkout main branch to create new branch from
+            checkout scm: [
+              $class: 'GitSCM',
+              branches: [[name: 'main']],
+              userRemoteConfigs: [[
+                url: 'git@github.com:your-org/your-repo.git',
+                credentialsId: 'github-ssh-credentials'
+              ]]
+            ]
+            
+            sh """
+              set -e
+              # Create environment directory if not exists
+              mkdir -p ${tfDir}
+              
+              # Create terraform.tfvars from template
+              sed -e "s|\\\${vpc_name}|${params.vpc_name}|g" \
+                  -e "s|\\\${env}|${params.env}|g" terraform.tfvars.template > ${tfDir}/terraform.tfvars
+              
+              cd ${tfDir}
+              
+              echo "🧪 Running terraform init..."
+              terraform init -input=false
+              
+              echo "🧠 Generating terraform plan..."
+              terraform plan -input=false -var-file=terraform.tfvars -out=tfplan.out
+              
+              cd ../../
+              
+              # Git config for this repo
+              git config user.name "jenkins-bot"
+              git config user.email "jenkins@example.com"
+              
+              # Create new branch
+              git checkout -b ${branchName}
+              
+              # Add files to git
+              git add ${tfDir}/terraform.tfvars ${tfDir}/tfplan.out
+              
+              # Commit
+              git commit -m "Terraform plan for ${params.env} - build ${env.BUILD_NUMBER}"
+              
+              # Push branch
+              git push origin ${branchName}
+              
+              # Create PR using GitHub CLI
+              gh auth login --with-token <<< "${GITHUB_TOKEN}"
+              
+              gh pr create --title "Terraform plan for ${params.env} - build ${env.BUILD_NUMBER}" \\
+                --body "This PR contains Terraform plan files for environment ${params.env} created by Jenkins build ${env.BUILD_NUMBER}." \\
+                --base main --head ${branchName} --repo your-org/your-repo
+            """
           }
         }
-      }
-    }
-
-    stage('Create PR (Optional)') {
-      when {
-        expression { return params.env != "" && params.vpc_name != "" }
-      }
-      steps {
-        echo "📌 This step should be integrated with GitHub CLI or API to create a PR."
-        echo "📝 PR should include terraform.tfvars and tfplan.out, or their summary."
-        // You can automate PR creation with GitHub CLI if required.
       }
     }
   }
