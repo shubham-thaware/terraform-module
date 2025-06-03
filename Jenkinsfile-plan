@@ -9,7 +9,7 @@ pipeline {
 
     environment {
         GITHUB_CREDENTIALS = credentials('github')
-        REPO_URL = 'git@github.com/shubham-thaware/terraform-module.git'
+        REPO_URL = 'https://github.com/shubham-thaware/terraform-module.git'
         BRANCH_NAME = "feature/vpc-${params.vpc_name}-${BUILD_NUMBER}"
     }
 
