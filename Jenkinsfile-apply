@@ -15,26 +15,32 @@ pipeline {
       steps {
         withCredentials([[
           $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-credentials-id', // <-- Replace with your AWS creds ID
+          credentialsId: 'aws-credentials-id', // 🔐 Update with your actual AWS credentials ID
           accessKeyVariable: 'AWS_ACCESS_KEY_ID',
           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-        ]] ) {
+        ]]) {
           dir("${env.TF_DIR}") {
             sh '''
-              echo "💡 Preparing terraform.tfvars from template..."
+              set -e  # ⛔ Exit immediately if any command fails
 
-              cat terraform.tfvars.template | sed \
-                -e "s|\${vpc_name}|${vpc_name}|" \
-                -e "s|\${env}|${env}|" > terraform.tfvars
+              echo "📄 Preparing terraform.tfvars from template..."
 
-              echo "📦 Running Terraform Init"
-              terraform init
+              sed -e "s|\\${vpc_name}|${vpc_name}|" \
+                  -e "s|\\${env}|${env}|" terraform.tfvars.template > terraform.tfvars
 
-              echo "🔍 Terraform Plan"
-              terraform plan -var-file=terraform.tfvars -out=tfplan.out
+              echo "🧪 Checking Terraform version..."
+              terraform -version
 
-              echo "🚀 Terraform Apply"
-              terraform apply -auto-approve tfplan.out
+              echo "📦 Running terraform init..."
+              terraform init -input=false
+
+              echo "🧠 Generating terraform plan..."
+              terraform plan -input=false -var-file=terraform.tfvars -out=tfplan.out
+
+              echo "🚀 Applying terraform plan..."
+              terraform apply -input=false -auto-approve tfplan.out
+
+              echo "✅ Terraform apply completed."
             '''
           }
         }
