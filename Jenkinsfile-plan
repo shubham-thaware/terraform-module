@@ -7,7 +7,7 @@ pipeline {
   }
 
   environment {
-    AWS_ACCESS_KEY_ID     = credentials('aws-credentials')
+    AWS_ACCESS_KEY_ID     = credentials('aws-credentials') // Updated credential ID
     AWS_SECRET_ACCESS_KEY = credentials('aws-credentials')
     GITHUB_TOKEN          = credentials('github')
     REPO_URL              = 'https://github.com/shubham-thaware/terraform-module.git'
@@ -38,6 +38,9 @@ pipeline {
             echo 📝 Generating terraform.tfvars from template...
             sed 's|__VPC_NAME__|${params.VPC_NAME}|g; s|__ENV__|${params.ENVIRONMENT}|g' terraform.tfvars.template > ${tfvarsFile}
           """
+
+          // Copy Terraform configuration files
+          sh "cp -r terraform/* ${envDir}/"
 
           dir(envDir) {
             sh '''
