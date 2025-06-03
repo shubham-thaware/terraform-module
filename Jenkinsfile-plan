@@ -36,9 +36,8 @@ pipeline {
 
             sh """
               set -e
-
-              # Create environment directory if not exists
-              mkdir -p ${tfDir}
+              tfDir="environments/${params.env}"
+              mkdir -p \$tfDir
 
               # Check if template file exists; if not, create a default one
               if [ ! -f terraform.tfvars.template ]; then
@@ -49,11 +48,12 @@ env      = "\\${env}"
 EOF
               fi
 
-              # Render terraform.tfvars from template
-              sed -e "s|\\\\${vpc_name}|${params.vpc_name}|g" \
-                  -e "s|\\\\${env}|${params.env}|g" terraform.tfvars.template > ${tfDir}/terraform.tfvars
+              #Safe substitution of variables into tfvars file
+              vpc_val='${params.vpc_name}'
+              env_val='${params.env}'
+              sed "s|\\\${vpc_name}|\$vpc_val|g; s|\\\${env}|\$env_val|g" terraform.tfvars.template > \$tfDir/terraform.tfvars
 
-              cd ${tfDir}
+              cd \$tfDir
 
               echo "🧪 Running terraform init..."
               terraform init -input=false
@@ -80,11 +80,11 @@ EOF
               git push origin ${branchName}
 
               # Create PR using GitHub CLI
-              gh auth login --with-token <<< "${GITHUB_TOKEN}"
+              export GITHUB_TOKEN=${GITHUB_TOKEN}
 
               gh pr create --title "Terraform plan for ${params.env} - build ${env.BUILD_NUMBER}" \
                 --body "This PR contains Terraform plan files for environment ${params.env} created by Jenkins build ${env.BUILD_NUMBER}." \
-                --base main --head ${branchName} --repo your-org/your-repo
+                --base main --head ${branchName} shubham-thaware/terraform-module
             """
           }
         }
