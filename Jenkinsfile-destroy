@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        string(name: 'environment', defaultValue: 'dev', description: 'Environment to destroy (dev/stage/prod)')
+        string(name: 'env', defaultValue: 'dev', description: 'Environment to destroy (dev/stage/prod)')
         string(name: 'vpc_name', description: 'VPC name used in resources')
     }
 
@@ -26,7 +26,7 @@ pipeline {
         stage('Terraform Init & Destroy') {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
-                    dir("environments/${params.environment}") {
+                    dir("environments/${params.env}") {
                         sh '''#!/bin/bash
                         export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                         export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
@@ -34,7 +34,7 @@ pipeline {
                         terraform init
 
                         terraform destroy \
-                          -var="environment=${environment}" \
+                          -var="env=${env}" \
                           -var="vpc_name=${vpc_name}" \
                           -auto-approve
                         '''
