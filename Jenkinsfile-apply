@@ -1,48 +1,44 @@
 pipeline {
-    agent any
+  agent any
 
-    parameters {
-        string(name: 'account_id', description: 'AWS Account ID')
-        string(name: 'environment', defaultValue: 'dev', description: 'Environment to deploy (dev/stage/prod)')
-        string(name: 'vpc_name', description: 'VPC name to be used in resources')
-    }
+  parameters {
+    string(name: 'vpc_name', defaultValue: 'my-vpc', description: 'VPC Name')
+    string(name: 'env', defaultValue: 'dev', description: 'Environment Name')
+  }
 
-    environment {
-        REPO_URL = 'https://github.com/shubham-thaware/terraform-module.git'
-    }
+  environment {
+    TF_DIR = 'environments/dev'
+  }
 
-    stages {
-        stage('Clean Workspace') {
-            steps {
-                cleanWs()
-            }
+  stages {
+    stage('Terraform Init & Apply') {
+      steps {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: 'aws-credentials-id', // <-- Replace with your AWS creds ID
+          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+        ]] ) {
+          dir("${env.TF_DIR}") {
+            sh '''
+              echo "💡 Preparing terraform.tfvars from template..."
+
+              cat terraform.tfvars.template | sed \
+                -e "s|\${vpc_name}|${vpc_name}|" \
+                -e "s|\${env}|${env}|" > terraform.tfvars
+
+              echo "📦 Running Terraform Init"
+              terraform init
+
+              echo "🔍 Terraform Plan"
+              terraform plan -var-file=terraform.tfvars -out=tfplan.out
+
+              echo "🚀 Terraform Apply"
+              terraform apply -auto-approve tfplan.out
+            '''
+          }
         }
-
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', credentialsId: 'github', url: "${REPO_URL}"
-            }
-        }
-
-        stage('Terraform Init & Apply') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    dir("environments/${params.environment}") {
-                        sh '''#!/bin/bash
-                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-
-                        terraform init
-
-                        terraform apply \
-                          -var="account_id=${account_id}" \
-                          -var="environment=${environment}" \
-                          -var="vpc_name=${vpc_name}" \
-                          -auto-approve
-                        '''
-                    }
-                }
-            }
-        }
+      }
     }
+  }
 }
