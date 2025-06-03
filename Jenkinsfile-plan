@@ -23,7 +23,7 @@ pipeline {
           script {
             def branchName = "plan-${params.env}-${env.BUILD_NUMBER}"
             def tfDir = "${BASE_DIR}/${params.env}"
-            
+
             // Checkout main branch to create new branch from
             checkout scm: [
               $class: 'GitSCM',
@@ -33,47 +33,57 @@ pipeline {
                 credentialsId: 'github'
               ]]
             ]
-            
+
             sh """
               set -e
+
               # Create environment directory if not exists
               mkdir -p ${tfDir}
-              
-              # Create terraform.tfvars from template
-              sed -e "s|\\\${vpc_name}|${params.vpc_name}|g" \
-                  -e "s|\\\${env}|${params.env}|g" terraform.tfvars.template > ${tfDir}/terraform.tfvars
-              
+
+              # Check if template file exists; if not, create a default one
+              if [ ! -f terraform.tfvars.template ]; then
+                echo "⚠️ terraform.tfvars.template not found, creating default template..."
+                cat <<EOF > terraform.tfvars.template
+vpc_name = "\\${vpc_name}"
+env      = "\\${env}"
+EOF
+              fi
+
+              # Render terraform.tfvars from template
+              sed -e "s|\\\\${vpc_name}|${params.vpc_name}|g" \
+                  -e "s|\\\\${env}|${params.env}|g" terraform.tfvars.template > ${tfDir}/terraform.tfvars
+
               cd ${tfDir}
-              
+
               echo "🧪 Running terraform init..."
               terraform init -input=false
-              
+
               echo "🧠 Generating terraform plan..."
               terraform plan -input=false -var-file=terraform.tfvars -out=tfplan.out
-              
+
               cd ../../
-              
+
               # Git config for this repo
               git config user.name "jenkins-bot"
               git config user.email "jenkins@example.com"
-              
+
               # Create new branch
               git checkout -b ${branchName}
-              
+
               # Add files to git
               git add ${tfDir}/terraform.tfvars ${tfDir}/tfplan.out
-              
+
               # Commit
               git commit -m "Terraform plan for ${params.env} - build ${env.BUILD_NUMBER}"
-              
+
               # Push branch
               git push origin ${branchName}
-              
+
               # Create PR using GitHub CLI
               gh auth login --with-token <<< "${GITHUB_TOKEN}"
-              
-              gh pr create --title "Terraform plan for ${params.env} - build ${env.BUILD_NUMBER}" \\
-                --body "This PR contains Terraform plan files for environment ${params.env} created by Jenkins build ${env.BUILD_NUMBER}." \\
+
+              gh pr create --title "Terraform plan for ${params.env} - build ${env.BUILD_NUMBER}" \
+                --body "This PR contains Terraform plan files for environment ${params.env} created by Jenkins build ${env.BUILD_NUMBER}." \
                 --base main --head ${branchName} --repo your-org/your-repo
             """
           }
