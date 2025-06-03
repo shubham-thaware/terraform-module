@@ -1,24 +1,48 @@
 pipeline {
-  agent any
-  environment {
-    GIT_CREDENTIALS = credentials('github')
-  }
-  stages {
-    stage('Clone Repo') {
-      steps {
-        git credentialsId: "${env.GIT_CREDENTIALS}", url: 'https://github.com/shubham-thaware/terraform-module.git', branch: 'main'
-      }
+    agent any
+
+    parameters {
+        string(name: 'account_id', description: 'AWS Account ID')
+        string(name: 'environment', defaultValue: 'dev', description: 'Environment to deploy (dev/stage/prod)')
+        string(name: 'vpc_name', description: 'VPC name to be used in resources')
     }
 
-    stage('Terraform Init & Apply') {
-      steps {
-        dir('environments/dev') {
-          sh '''
-          terraform init
-          terraform apply -auto-approve -var-file=terraform.auto.tfvars
-          '''
-        }
-      }
+    environment {
+        REPO_URL = 'https://github.com/shubham-thaware/terraform-module.git'
     }
-  }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', credentialsId: 'github', url: "${REPO_URL}"
+            }
+        }
+
+        stage('Terraform Init & Apply') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'aws-credentials', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    dir("environments/${params.environment}") {
+                        sh '''#!/bin/bash
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+                        terraform init
+
+                        terraform apply \
+                          -var="account_id=${account_id}" \
+                          -var="environment=${environment}" \
+                          -var="vpc_name=${vpc_name}" \
+                          -auto-approve
+                        '''
+                    }
+                }
+            }
+        }
+    }
 }
