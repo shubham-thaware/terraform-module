@@ -33,13 +33,11 @@ pipeline {
               ]]
             ]
 
-            // Avoid referencing Jenkins objects inside shell script
-            def tfEnv = "${params.env}"
-            def tfVpc = "${params.vpc_name}"
-
-            withEnv(["TF_ENV=${tfEnv}", "TF_VPC_NAME=${tfVpc}"]) {
-              sh '''
+            // Generate tfvars and run Terraform with environment safely injected
+            sh(
+              script: '''
                 set -e
+                echo "📁 Preparing Terraform directory..."
                 tfDir="environments/${TF_ENV}"
                 mkdir -p "$tfDir"
 
@@ -51,7 +49,8 @@ env      = "__ENV__"
 EOF
                 fi
 
-                sed "s|__VPC_NAME__|$TF_VPC_NAME|g; s|__ENV__|$TF_ENV|g" terraform.tfvars.template > "$tfDir/terraform.tfvars"
+                echo "📝 Generating terraform.tfvars from template..."
+                sed "s|__VPC_NAME__|${TF_VPC_NAME}|g; s|__ENV__|${TF_ENV}|g" terraform.tfvars.template > "$tfDir/terraform.tfvars"
 
                 cd "$tfDir"
 
@@ -63,21 +62,27 @@ EOF
 
                 cd ../../
 
+                echo "📦 Committing tfplan and tfvars..."
                 git config user.name "jenkins-bot"
                 git config user.email "jenkins@example.com"
 
-                git checkout -b plan-$TF_ENV-$BUILD_NUMBER
+                git checkout -b plan-${TF_ENV}-${BUILD_NUMBER}
                 git add "$tfDir/terraform.tfvars" "$tfDir/tfplan.out"
-                git commit -m "Terraform plan for $TF_ENV - build $BUILD_NUMBER"
-                git push origin plan-$TF_ENV-$BUILD_NUMBER
+                git commit -m "Terraform plan for ${TF_ENV} - build ${BUILD_NUMBER}"
+                git push origin plan-${TF_ENV}-${BUILD_NUMBER}
 
+                echo "🚀 Creating pull request..."
                 export GITHUB_TOKEN=$GITHUB_TOKEN
 
-                gh pr create --title "Terraform plan for $TF_ENV - build $BUILD_NUMBER" \
-                  --body "This PR contains Terraform plan files for environment $TF_ENV created by Jenkins build $BUILD_NUMBER." \
-                  --base main --head plan-$TF_ENV-$BUILD_NUMBER shubham-thaware/terraform-module
-              '''
-            }
+                gh pr create --title "Terraform plan for ${TF_ENV} - build ${BUILD_NUMBER}" \
+                  --body "This PR contains Terraform plan files for environment ${TF_ENV} created by Jenkins build ${BUILD_NUMBER}." \
+                  --base main --head plan-${TF_ENV}-${BUILD_NUMBER} shubham-thaware/terraform-module
+              ''',
+              environment: [
+                "TF_ENV=${params.env}",
+                "TF_VPC_NAME=${params.vpc_name}"
+              ]
+            )
           }
         }
       }
