@@ -2,47 +2,58 @@ pipeline {
   agent any
 
   parameters {
-    string(name: 'vpc_name', description: 'VPC Name')
-    string(name: 'env', description: 'Environment Name')
+    string(name: 'env', description: 'Environment name (dev, prod, stage, qa, etc)')
+    string(name: 'vpc_name', description: 'VPC Name (e.g. weather-app)')
   }
 
   environment {
-    TF_DIR = 'environments/dev'
+    BASE_DIR = 'environments'
   }
 
   stages {
-    stage('Terraform Init & Apply') {
+    stage('Checkout main branch') {
+      steps {
+        checkout scm: [
+          $class: 'GitSCM',
+          branches: [[name: 'main']],
+          userRemoteConfigs: [[
+            url: 'git@github.com:your-org/your-repo.git', // update repo URL
+            credentialsId: 'github-ssh-credentials'       // your GitHub SSH or HTTPS credentials id
+          ]]
+        ]
+      }
+    }
+
+    stage('Terraform Apply') {
       steps {
         withCredentials([[
           $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: 'aws-credentials', // 🔐 Update with your actual AWS credentials ID
+          credentialsId: 'aws-credentials',
           accessKeyVariable: 'AWS_ACCESS_KEY_ID',
           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
         ]]) {
-          dir("${env.TF_DIR}") {
-            sh '''
-              set -e  # ⛔ Exit immediately if any command fails
+          script {
+            def tfDir = "${BASE_DIR}/${params.env}"
+            dir(tfDir) {
+              sh '''
+                set -e
+                echo "✅ Applying terraform plan for environment: '${params.env}', VPC: '${params.vpc_name}'"
 
-              echo "📄 Preparing terraform.tfvars from template..."
+                # Validate if plan file exists
+                if [ ! -f tfplan.out ]; then
+                  echo "❌ ERROR: Terraform plan file (tfplan.out) not found in ${tfDir}"
+                  exit 1
+                fi
 
-              # ✅ Replace template variables with parameter values
-              sed -e "s|\\\${vpc_name}|${vpc_name}|g" \
-                  -e "s|\\\${env}|${env}|g" terraform.tfvars.template > terraform.tfvars
+                echo "📦 Running terraform init..."
+                terraform init -input=false
 
-              echo "🧪 Checking Terraform version..."
-              terraform -version
+                echo "🚀 Applying terraform plan..."
+                terraform apply -input=false -auto-approve tfplan.out
 
-              echo "📦 Running terraform init..."
-              terraform init -input=false
-
-              echo "🧠 Generating terraform plan..."
-              terraform plan -input=false -var-file=terraform.tfvars -out=tfplan.out
-
-              echo "🚀 Applying terraform plan..."
-              terraform apply -input=false -auto-approve tfplan.out
-
-              echo "✅ Terraform apply completed."
-            '''
+                echo "✅ Terraform apply completed."
+              '''
+            }
           }
         }
       }
