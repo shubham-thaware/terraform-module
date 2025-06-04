@@ -1,10 +1,11 @@
-# terraform-module
-This is an terraform module repo maintain by Shubham Thaware
-This repository defines reusable Terraform modules for different AWS resources. Each module has:
-- main.tf → Defines resources.
-- variables.tf → Contains input variables.
-- outputs.tf → Exposes outputs for other modules.
-📂 Folder Structur
+```markdown
+# Terraform AWS Modules
+
+This repository, maintained by Shubham, defines reusable Terraform modules for various AWS resources. These modules are self-contained and can be called from other repositories, making resource management in AWS simpler and more efficient.
+
+## Folder Structure
+
+```plaintext
 terraform-module/
 ├── aws-vpc/
 │   ├── main.tf
@@ -26,10 +27,22 @@ terraform-module/
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
-
-
-🔹 Example Terraform Code (terraform-module/aws-vpc/main.tf
 ```
+
+## Modules Overview
+
+Each module contains:
+- **`main.tf`**: Defines the resources.
+- **`variables.tf`**: Contains input variables for configuration.
+- **`outputs.tf`**: Exposes outputs that can be used by other modules.
+
+### Example: AWS VPC Module
+
+Here's a snippet of how the AWS VPC module is structured:
+
+**File: `terraform-module/aws-vpc/main.tf`**
+
+```hcl
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
 }
@@ -40,5 +53,20 @@ resource "aws_subnet" "private" {
   cidr_block = var.private_subnet_cidrs[count.index]
 }
 ```
-- Defines the VPC and subnets as reusable Terraform modules.
-- Modules are self-contained and can be called from another repository.
+
+In this example, the VPC and its private subnets are defined as reusable Terraform resources.
+
+## Usage
+
+To use these modules, you can reference them in your Terraform configuration files. Make sure to pass the required input variables as defined in `variables.tf`.
+
+## Contribution
+
+If you have suggestions or improvements, feel free to submit a pull request or open an issue. Contributions are always welcome!
+
+## License
+
+This project is licensed under the MIT License.
+```
+
+Feel free to copy and paste the above content into your `README.md` file!
