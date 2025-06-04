@@ -10,7 +10,7 @@ variable "aws_eks_cluster_version" {
     default     = null  
 }
 
-variable "aws_vpc_id" {
+variable "vpc_id" {
   description = "VPC ID where EKS will be deployed"
   type        = string
 }
