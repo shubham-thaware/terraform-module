@@ -21,12 +21,42 @@ variable "aws_vpc_private_subnet_ids" {
 }
 
 variable "aws_eks_cluster_sg_ids" {
-  description = "Security group ID for EKS control plane"
-  type        = string
+  description = "List of security group IDs for EKS control plane"
+  type        = list(string)
 }
 
 variable "cluster_endpoint_public_access_cidrs" {
   description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint."
   type        = list(string)
   default     = ["0.0.0.0/0"]
+}
+
+variable "eks_desired_size" {
+  description = "Desired number of nodes in the EKS Node Group"
+  type        = number
+}
+
+variable "eks_max_size" {
+  description = "Maximum number of nodes in the EKS Node Group"
+  type        = number
+}
+
+variable "eks_min_size" {
+  description = "Minimum number of nodes in the EKS Node Group"
+  type        = number
+}
+
+variable "eks_instance_type" {
+  description = "Instance type for EKS Node Group"
+  type        = string
+}
+
+variable "eks_endpoint_private_access" {
+  description = "Enable private access to EKS API server"
+  type        = bool
+}
+
+variable "eks_endpoint_public_access" {
+  description = "Enable public access to EKS API server"
+  type        = bool
 }
