@@ -56,7 +56,7 @@ resource "aws_security_group" "database-sg" {
 }
 
 resource "aws_security_group" "eks_cluster" {
-  name        = "${var.cluster_name}-cluster-sg"
+  name        = "${aws_eks_cluster_name}-cluster-sg"
   description = "Cluster communication with worker nodes"
   vpc_id      = var.vpc_id
 
@@ -68,6 +68,6 @@ resource "aws_security_group" "eks_cluster" {
   }
 
   tags = {
-    Name = "${var.cluster_name}-cluster-sg"
+    Name = "${aws_eks_cluster_name}-eks-sg"
   }
 }
