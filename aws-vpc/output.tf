@@ -8,18 +8,10 @@ output "vpc_arn" {
 
 }
 
-output "public-subnet-1-id" {
-  value = aws_subnet.public-subnet-1.id
+output "private_subnet_ids" {
+  value = [aws_subnet.private-subnet-1.id, aws_subnet.private-subnet-2.id]
 }
 
-output "public-subnet-2-id" {
-  value = aws_subnet.public-subnet-2.id
-}
-
-output "private-subnet-1-id" {
-  value = aws_subnet.private-subnet-1.id
-}
-
-output "private-subnet-2-id" {
-  value = aws_subnet.private-subnet-2.id
+output "public_subnet_ids" {
+  value = [aws_subnet.public-subnet-1.id, aws_subnet.public-subnet-2.id]
 }
