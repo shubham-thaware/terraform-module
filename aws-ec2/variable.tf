@@ -1,3 +1,8 @@
+variable "ami_id" {
+  description = "AMI ID"
+  type        = string
+}
+
 variable "vpc_id" {
   description = "VPC ID"
   type        = string
