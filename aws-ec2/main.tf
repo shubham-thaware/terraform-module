@@ -12,7 +12,7 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "database" {
-  ami                         = data.aws_ami.latest_ami.id
+  ami                         = var.ami_id != "" ? var.ami_id : data.aws_ami.latest_ami.id
   instance_type               = var.db_instance_type
   subnet_id                   = var.private_subnet_id
   key_name                    = var.key_name
