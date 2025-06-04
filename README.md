@@ -1,72 +1,121 @@
-```markdown
-# Terraform AWS Modules
+# 🌩️ Terraform AWS Modules
 
-This repository, maintained by Shubham, defines reusable Terraform modules for various AWS resources. These modules are self-contained and can be called from other repositories, making resource management in AWS simpler and more efficient.
+![Terraform](https://img.shields.io/badge/Terraform-Modules-623CE4?logo=terraform&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-Cloud-FF9900?logo=amazon-aws&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-## Folder Structure
+> **Author:** [Shubham Thaware](https://github.com/shubham-thaware)  
+> **Purpose:** Reusable, scalable, and production-ready Terraform modules for AWS Infrastructure.
 
-```plaintext
+---
+
+## 📁 Repository Structure
+
+This repository contains a collection of production-grade Terraform modules that can be reused across AWS environments. These modules encapsulate common AWS infrastructure patterns and best practices, making your infrastructure code modular, DRY (Don’t Repeat Yourself), and easy to manage.
+
 terraform-module/
-├── aws-vpc/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-├── aws-eks/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-├── aws-ec2/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-├── aws-security-groups/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-├── aws-ecr/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-```
+├── aws-vpc/ # Virtual Private Cloud module
+├── aws-eks/ # Amazon EKS (Kubernetes) module
+├── aws-ec2/ # EC2 Instances module
+├── aws-security-groups/ # Security Groups module
+├── aws-ecr/ # Elastic Container Registry module
 
-## Modules Overview
 
 Each module contains:
-- **`main.tf`**: Defines the resources.
-- **`variables.tf`**: Contains input variables for configuration.
-- **`outputs.tf`**: Exposes outputs that can be used by other modules.
+- `main.tf` – Core resource definitions
+- `variables.tf` – Input variables for customization
+- `outputs.tf` – Output values to be used by other modules or root modules
 
-### Example: AWS VPC Module
+---
 
-Here's a snippet of how the AWS VPC module is structured:
+## 🔧 Module Details
 
-**File: `terraform-module/aws-vpc/main.tf`**
+### ✅ aws-vpc
+
+Creates a VPC with public and private subnets, Internet Gateway, and Route Tables.
 
 ```hcl
-resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
+module "vpc" {
+  source = "github.com/shubham-thaware/terraform-module//aws-vpc"
+  
+  vpc_cidr               = "10.0.0.0/16"
+  private_subnet_cidrs   = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnet_cidrs    = ["10.0.101.0/24", "10.0.102.0/24"]
+  enable_nat_gateway     = true
 }
 
-resource "aws_subnet" "private" {
-  count = length(var.private_subnet_cidrs)
-  vpc_id = aws_vpc.main.id
-  cidr_block = var.private_subnet_cidrs[count.index]
+✅ aws-eks
+Creates a fully managed EKS cluster with worker nodes, node groups, IAM roles, and security.
+
+✅ aws-ec2
+Launch EC2 instances with customizable AMIs, key pairs, instance types, tags, and security group attachments.
+
+✅ aws-security-groups
+Define reusable and composable security groups with ingress/egress rules.
+
+✅ aws-ecr
+Provision private ECR repositories to store container images for your workloads.
+
+🚀 How to Use
+Initialize Terraform
+
+bash
+Copy
+Edit
+terraform init
+Use a module in your root configuration
+
+hcl
+Copy
+Edit
+module "ec2_instance" {
+  source       = "github.com/shubham-thaware/terraform-module//aws-ec2"
+  instance_type = "t3.micro"
+  ami_id        = "ami-0abcdef1234567890"
+  key_name      = "my-key"
 }
-```
+Apply your configuration
 
-In this example, the VPC and its private subnets are defined as reusable Terraform resources.
+bash
+Copy
+Edit
+terraform apply
 
-## Usage
 
-To use these modules, you can reference them in your Terraform configuration files. Make sure to pass the required input variables as defined in `variables.tf`.
+📌 Best Practices Followed
+✅ Modular design for reusability and maintainability
 
-## Contribution
+✅ Follows Terraform Registry Module Standards
 
-If you have suggestions or improvements, feel free to submit a pull request or open an issue. Contributions are always welcome!
+✅ Uses version constraints and tagging for module versioning
 
-## License
+✅ Supports input validation and outputs for composition
 
+✅ Written with production-readiness in mind
+
+
+📥 Contribution
+We love contributions! Please follow these steps:
+
+Fork this repo 🍴
+
+Create your feature branch (git checkout -b feature/my-feature)
+
+Commit your changes (git commit -am 'Add new feature')
+
+Push to the branch (git push origin feature/my-feature)
+
+Open a Pull Request ✅
+
+Or open an issue for any bugs or feature requests.
+
+
+📜 License
 This project is licensed under the MIT License.
-```
+Feel free to use it for commercial or personal projects.
 
+🙌 Connect
+If you find this repository useful or want to connect with me:
+
+🌐 GitHub: @shubham-thaware
 
