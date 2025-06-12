@@ -6,7 +6,7 @@ locals {
 
 }
 
-resource "aws_security_group" "bastion-sg" {
+resource "aws_security_group" "bastion_sg" {
   name        = local.sg_names["sg1"]
   description = "Allow TLS inbound traffic and all outbound traffic for bastion security group"
   vpc_id      = var.vpc_id
@@ -31,7 +31,7 @@ resource "aws_security_group" "bastion-sg" {
 }
 
 
-resource "aws_security_group" "database-sg" {
+resource "aws_security_group" "database_sg" {
   name        = local.sg_names["sg2"]
   description = "Allow TLS inbound traffic and all outbound traffic for database security group"
   vpc_id      = var.vpc_id
