@@ -9,7 +9,7 @@ resource "aws_vpc" "vpc" {
     {
       Name = "${var.vpc_name}-${var.env}"
     },
-    var.additional_tags
+    #var.additional_tags
   )
 
 }
