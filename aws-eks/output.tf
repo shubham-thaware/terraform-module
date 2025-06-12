@@ -66,8 +66,7 @@ output "node_group_public_version" {
 }
 
 output "private_subnet_ids" {
-  description = "List of private subnet IDs used in EKS"
-  value       = aws_vpc_private_subnet_ids
+  value = var.aws_vpc_private_subnet_ids
 }
 
 # EKS Node Group Outputs - Private
