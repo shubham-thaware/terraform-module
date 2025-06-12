@@ -1,11 +1,11 @@
 output "jump_sg_id" {
   description = "ID of the jump server security group"
-  value       = aws_security_group.bastion-sg.id
+  value       = aws_security_group.bastion_sg.id
 }
 
 output "db_sg_id" {
   description = "ID of the database security group"
-  value       = aws_security_group.database-sg.id
+  value       = aws_security_group.database_sg.id
 }
 
 output "eks_cluster_sg_id" {
