@@ -6,5 +6,5 @@ data "aws_ami" "latest_ami" {
     values = ["ubuntu/images/hvm-ssd/ubuntu-20.04-amd64-server-*"]
   }
 
-  owners = ["amazon"] # Specify the AMI owner (Amazon, Self, etc.)
+  owners = ["099720109477"] # Canonical
 }
