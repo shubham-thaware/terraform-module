@@ -21,22 +21,22 @@ variable "vpc_cidr_block" {
 #}
 
 #Subnet variables
-variable "public-subnet-cidr-1" {
-  description = "Required Public Subnet 1 CIDR, defualt name is '10.0.10.0/24'"
-  default     = "10.0.10.0/24"
+variable "public_subnet_cidr_1" {
+  description = "Provide the CIDR block for public subnet 1"
+  type        = string
 }
 
-variable "public-subnet-cidr-2" {
-  description = "Required Public Subnet 2 CIDR, defualt name is '10.0.30.0/24'"
-  default     = "10.0.30.0/24"
+variable "public_subnet_cidr_2" {
+  description = "Provide the CIDR block for public subnet 2"
+  type        = string
 }
 
-variable "private-subnet-cidr-1" {
-  description = "Required Public Subnet 1 CIDR, defualt name is '10.0.0.0/26'"
-  default     = "10.0.0.0/26"
+variable "private_subnet_cidr_1" {
+  description = "Provide the CIDR block for private subnet 1"
+  type        = string
 }
 
-variable "private-subnet-cidr-2" {
-  description = "Required Public Subnet 2 CIDR, defualt name is '10.0.1.0/26'"
-  default     = "10.0.1.0/26"
+variable "private_subnet_cidr_2" {
+  description = "Provide the CIDR block for private subnet 2"
+  type        = string
 }
