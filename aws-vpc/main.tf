@@ -17,7 +17,7 @@ resource "aws_vpc" "vpc" {
 #Creating Subnets 
 resource "aws_subnet" "public_subnet_1" {
   vpc_id                                      = aws_vpc.vpc.id
-  cidr_block                                  = var.public-subnet-cidr-1
+  cidr_block                                  = var.public_subnet_cidr_1
   availability_zone                           = "us-east-1a"
   map_public_ip_on_launch                     = true
   enable_resource_name_dns_a_record_on_launch = true
@@ -31,7 +31,7 @@ resource "aws_subnet" "public_subnet_1" {
 
 resource "aws_subnet" "public_subnet_2" {
   vpc_id                                      = aws_vpc.vpc.id
-  cidr_block                                  = var.public-subnet-cidr-2
+  cidr_block                                  = var.public_subnet_cidr_2
   availability_zone                           = "us-east-1b"
   map_public_ip_on_launch                     = true
   enable_resource_name_dns_a_record_on_launch = true
@@ -45,7 +45,7 @@ resource "aws_subnet" "public_subnet_2" {
 
 resource "aws_subnet" "private_subnet_1" {
   vpc_id                                      = aws_vpc.vpc.id
-  cidr_block                                  = var.private-subnet-cidr-1
+  cidr_block                                  = var.private_subnet_cidr_1
   availability_zone                           = "us-east-1a"
   enable_resource_name_dns_a_record_on_launch = true
   map_public_ip_on_launch                     = false
@@ -59,7 +59,7 @@ resource "aws_subnet" "private_subnet_1" {
 
 resource "aws_subnet" "private_subnet_2" {
   vpc_id                                      = aws_vpc.vpc.id
-  cidr_block                                  = var.private-subnet-cidr-2
+  cidr_block                                  = var.private_subnet_cidr_2
   availability_zone                           = "us-east-1b"
   enable_resource_name_dns_a_record_on_launch = true
   map_public_ip_on_launch                     = false
