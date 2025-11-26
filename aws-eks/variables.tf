@@ -1,13 +1,18 @@
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "aws_eks_cluster_name" {
-    description = "Name of the EKS cluster"
-    type = string
-  
+  description = "Name of the EKS cluster"
+  type        = string
 }
 
 variable "aws_eks_cluster_version" {
-    description = "AWS EKS cluster Version"
-    type = string
-    default     = null  
+  description = "AWS EKS cluster Version"
+  type        = string
+  default     = null
 }
 
 variable "vpc_id" {
@@ -16,8 +21,8 @@ variable "vpc_id" {
 }
 
 variable "aws_vpc_private_subnet_ids" {
-    description = "List of private subnet IDs for EKS nodes (must be in at least 2 AZs)"
-    type        = list(string)
+  description = "List of private subnet IDs for EKS nodes (must be in at least 2 AZs)"
+  type        = list(string)
 }
 
 variable "aws_eks_cluster_sg_ids" {
