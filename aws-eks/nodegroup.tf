@@ -1,5 +1,5 @@
 resource "aws_eks_node_group" "default" {
-  count           = var.create_spot_node_group ? 0 : 1
+  #count           = var.create_spot_node_group ? 0 : 1
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "${var.aws_eks_cluster_name}-ng"
   node_role_arn   = aws_iam_role.eks_nodes.arn
