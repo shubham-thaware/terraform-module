@@ -1,42 +1,53 @@
-##############################################
-# EKS Cluster Outputs
-##############################################
-
-output "cluster_name" {
-  description = "Name of the EKS Cluster"
-  value       = aws_eks_cluster.this.name
+# Cluster identity
+output "cluster_id" {
+  value = aws_eks_cluster.this.id
 }
 
-output "cluster_endpoint" {
-  description = "API Server endpoint of the EKS Cluster"
-  value       = aws_eks_cluster.this.endpoint
+output "cluster_arn" {
+  value = aws_eks_cluster.this.arn
 }
 
-output "cluster_ca" {
-  description = "Base64 encoded CA certificate data"
-  value       = aws_eks_cluster.this.certificate_authority[0].data
-  sensitive   = true
+output "cluster_version" {
+  value = aws_eks_cluster.this.version
 }
 
-##############################################
-# Node Group Outputs
-##############################################
-
-output "spot_nodegroup_arn" {
-  value = length(aws_eks_node_group.spot) > 0 ? aws_eks_node_group.spot[0].arn : null
+output "cluster_certificate_authority_data" {
+  value     = aws_eks_cluster.this.certificate_authority[0].data
+  sensitive = true
 }
 
-
-##############################################
-# IAM Outputs
-##############################################
-
-output "cluster_autoscaler_role_arn" {
-  description = "IAM Role ARN for Cluster Autoscaler"
-  value       = aws_iam_role.cluster_autoscaler.arn
+# IAM
+output "cluster_iam_role_arn" {
+  value = aws_iam_role.cluster.arn
 }
 
-output "ebs_csi_role_arn" {
-  description = "IAM Role ARN for EBS CSI Driver"
-  value       = aws_iam_role.ebs_csi.arn
+output "cluster_iam_role_name" {
+  value = aws_iam_role.cluster.name
+}
+
+# OIDC Issuer
+output "cluster_oidc_issuer_url" {
+  value = aws_eks_cluster.this.identity[0].oidc[0].issuer
+}
+
+# Security group
+output "cluster_primary_security_group_id" {
+  value = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+}
+
+# Node Group outputs (default)
+output "node_group_public_arn" {
+  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].arn : null
+}
+
+output "node_group_public_id" {
+  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].id : null
+}
+
+output "node_group_public_status" {
+  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].status : null
+}
+
+output "node_group_public_version" {
+  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].version : null
 }
