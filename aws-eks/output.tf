@@ -37,17 +37,18 @@ output "cluster_primary_security_group_id" {
 
 # Node Group outputs (default)
 output "node_group_public_arn" {
-  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].arn : null
+  value = aws_eks_node_group.default.arn
 }
 
 output "node_group_public_id" {
-  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].id : null
+  value = aws_eks_node_group.default.id
 }
 
 output "node_group_public_status" {
-  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].status : null
+  value = aws_eks_node_group.default.status
 }
 
 output "node_group_public_version" {
-  value = length(aws_eks_node_group.default) > 0 ? aws_eks_node_group.default[0].version : null
+  value = aws_eks_node_group.default.version
 }
+
