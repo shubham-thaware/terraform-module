@@ -1,7 +1,15 @@
+locals {
+  use_al2023 = tonumber(replace(var.aws_eks_cluster_version, ".", "")) >= 133
+}
+
+
 # SSM AMI lookup for EKS-optimized AMI (Amazon Linux 2)
 data "aws_ssm_parameter" "eks_ami" {
-  name = "/aws/service/eks/optimized-ami/${var.aws_eks_cluster_version}/amazon-linux-2/recommended/image_id"
+  name = local.use_al2023
+    ? "/aws/service/eks/optimized-ami/${var.aws_eks_cluster_version}/amazon-linux-2023/recommended/image_id"
+    : "/aws/service/eks/optimized-ami/${var.aws_eks_cluster_version}/amazon-linux-2/recommended/image_id"
 }
+
 
 resource "aws_launch_template" "eks_nodes" {
   name_prefix   = "${var.aws_eks_cluster_name}-lt-"
