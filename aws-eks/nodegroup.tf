@@ -1,7 +1,9 @@
-resource "aws_eks_node_group" "default" {
-  #count           = var.create_spot_node_group ? 0 : 1
+#############################################
+# Node Group 1
+#############################################
+resource "aws_eks_node_group" "ng_1" {
   cluster_name    = aws_eks_cluster.this.name
-  node_group_name = "${var.aws_eks_cluster_name}-ng"
+  node_group_name = "${var.aws_eks_cluster_name}-ng-1"
   node_role_arn   = aws_iam_role.eks_nodes.arn
   subnet_ids      = var.aws_vpc_private_subnet_ids
 
@@ -17,32 +19,45 @@ resource "aws_eks_node_group" "default" {
   }
 
   tags = merge(var.default_tags, {
-    "k8s.io/cluster-autoscaler/enabled"                     = "true",
-    "k8s.io/cluster-autoscaler/${var.aws_eks_cluster_name}" = "owned",
-    "Name"                                                  = "${var.aws_eks_cluster_name}-ng"
+    "Name"                                         = "${var.aws_eks_cluster_name}-ng-1"
+    "k8s.io/cluster-autoscaler/enabled"            = "true"
+    "k8s.io/cluster-autoscaler/${var.aws_eks_cluster_name}" = "owned"
   })
 
-  depends_on = [aws_eks_cluster.this, aws_launch_template.eks_nodes]
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_launch_template.eks_nodes
+  ]
 }
 
-# Optional spot node group
-resource "aws_eks_node_group" "spot" {
-  count = var.create_spot_node_group ? 0 : 1
-
+#############################################
+# Node Group 2
+#############################################
+resource "aws_eks_node_group" "ng_2" {
   cluster_name    = aws_eks_cluster.this.name
-  node_group_name = "${var.aws_eks_cluster_name}-ng-spot"
+  node_group_name = "${var.aws_eks_cluster_name}-ng-2"
   node_role_arn   = aws_iam_role.eks_nodes.arn
   subnet_ids      = var.aws_vpc_private_subnet_ids
-  capacity_type   = "SPOT"
-  instance_types  = var.spot_instance_types
 
-  scaling_config {
-    desired_size = var.spot_desired_size
-    max_size     = var.spot_max_size
-    min_size     = var.spot_min_size
+  launch_template {
+    id      = aws_launch_template.eks_nodes.id
+    version = "$Latest"
   }
 
-  tags = merge(var.default_tags, { Name = "${var.aws_eks_cluster_name}-ng-spot" })
+  scaling_config {
+    desired_size = var.node_desired
+    max_size     = var.node_max
+    min_size     = var.node_min
+  }
 
-  depends_on = [aws_eks_cluster.this]
+  tags = merge(var.default_tags, {
+    "Name"                                         = "${var.aws_eks_cluster_name}-ng-2"
+    "k8s.io/cluster-autoscaler/enabled"            = "true"
+    "k8s.io/cluster-autoscaler/${var.aws_eks_cluster_name}" = "owned"
+  })
+
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_launch_template.eks_nodes
+  ]
 }

@@ -52,3 +52,20 @@ output "node_group_public_version" {
   value = aws_eks_node_group.default.version
 }
 
+output "node_group_1_arn" {
+  value = aws_eks_node_group.ng_1.arn
+}
+
+output "node_group_2_arn" {
+  value = aws_eks_node_group.ng_2.arn
+}
+
+output "node_group_1_status" {
+  value = aws_eks_node_group.ng_1.status
+}
+
+output "node_group_2_status" {
+  value = aws_eks_node_group.ng_2.status
+}
+
+
