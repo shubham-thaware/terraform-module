@@ -1,7 +1,3 @@
-##############################################
-# General
-##############################################
-
 variable "aws_region" {
   type = string
 }
@@ -22,10 +18,6 @@ variable "default_tags" {
   }
 }
 
-##############################################
-# Networking
-##############################################
-
 variable "vpc_id" {
   type = string
 }
@@ -41,8 +33,6 @@ variable "aws_eks_cluster_sg_ids" {
 variable "cluster_endpoint_public_access_cidrs" {
   description = "Allowed CIDRs for EKS API public endpoint"
   type        = list(string)
-
-  # ⚠️ CHANGE TO YOUR IP FOR PRODUCTION
   default = ["0.0.0.0/0"]
 }
 
@@ -56,56 +46,22 @@ variable "eks_endpoint_public_access" {
   default = false
 }
 
-##############################################
-# Cluster Logging
-##############################################
-
 variable "control_plane_log_types" {
   type    = list(string)
   default = ["api", "audit", "authenticator"]
 }
-
-##############################################
-# KMS
-##############################################
 
 variable "enable_kms" {
   type    = bool
   default = false
 }
 
-##############################################
-# Terraform Node Group Config
-##############################################
-
-# variable "eks_desired_size" {
-#   type    = number
-#   default = 2
-# }
-
-# variable "eks_min_size" {
-#   type    = number
-#   default = 1
-# }
-
-# variable "eks_max_size" {
-#   type    = number
-#   default = 4
-# }
-
-# variable "eks_instance_types" {
-#   type    = list(string)
-#   default = ["t3.medium"]
-# }
 
 variable "node_labels" {
   type    = map(string)
   default = {}
 }
 
-##############################################
-# Launch Template Nodegroup Variables
-##############################################
 
 variable "node_instance_type" {
   type    = string
@@ -132,9 +88,6 @@ variable "node_max" {
   default = 4
 }
 
-##############################################
-# Spot Node Group
-##############################################
 
 variable "create_spot_node_group" {
   type    = bool
@@ -161,9 +114,6 @@ variable "spot_max_size" {
   default = 0
 }
 
-##############################################
-# EBS CSI Driver
-##############################################
 
 variable "ebs_csi_version" {
   description = "Pinned version of EBS CSI Driver"
