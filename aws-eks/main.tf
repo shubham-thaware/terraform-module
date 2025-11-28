@@ -1,4 +1,4 @@
-resource "aws_eks_cluster" "cluster" {
+resource "aws_eks_cluster" "this" {
   name     = var.aws_eks_cluster_name
   role_arn = aws_iam_role.cluster.arn
   version  = var.aws_eks_cluster_version
@@ -8,93 +8,45 @@ resource "aws_eks_cluster" "cluster" {
     endpoint_private_access = var.eks_endpoint_private_access
     endpoint_public_access  = var.eks_endpoint_public_access
     public_access_cidrs     = var.cluster_endpoint_public_access_cidrs
-    security_group_ids      = var.aws_eks_cluster_sg_ids  
+    security_group_ids      = var.aws_eks_cluster_sg_ids
   }
+
+  enabled_cluster_log_types = var.control_plane_log_types
+
+  encryption_config {
+    dynamic "provider" {
+      for_each = var.enable_kms ? [1] : []
+      content {
+        key_arn = aws_kms_key.cluster[0].arn
+      }
+    }
+    resources = var.enable_kms ? ["secrets"] : []
+  }
+
+
+  tags = merge(var.default_tags, { "Name" = var.aws_eks_cluster_name })
 
   depends_on = [
     aws_iam_role_policy_attachment.eks_cluster_policy,
-    aws_iam_role_policy_attachment.eks_cluster_vpc_policy,
-    aws_iam_role_policy_attachment.eks_service_policy
+    aws_iam_role_policy_attachment.eks_cluster_vpc_policy
   ]
 }
 
-resource "aws_eks_node_group" "nodes_1" {
-  cluster_name    = aws_eks_cluster.cluster.name
-  node_group_name = "${var.aws_eks_cluster_name}-eks-node-group-1"
-  node_role_arn   = aws_iam_role.eks_nodes.arn
-  subnet_ids      = var.aws_vpc_private_subnet_ids
-  version         = var.aws_eks_cluster_version
-  instance_types  = [var.eks_instance_type]
+resource "aws_kms_key" "cluster" {
+  count = var.enable_kms ? 1 : 0
 
-  scaling_config {
-    desired_size = var.eks_desired_size
-    max_size     = var.eks_max_size
-    min_size     = var.eks_min_size
-  }
-
-  update_config {
-    max_unavailable = 1
-  }
-
-  depends_on = [
-    aws_eks_cluster.cluster
-  ]
-
-  tags = {
-    name = "${var.aws_eks_cluster_name}-eks-node-group-1"
-  }
-}
-
-resource "aws_eks_node_group" "nodes_2" {
-  cluster_name    = aws_eks_cluster.cluster.name
-  node_group_name = "${var.aws_eks_cluster_name}-eks-node-group-2"
-  node_role_arn   = aws_iam_role.eks_nodes.arn
-  subnet_ids      = var.aws_vpc_private_subnet_ids
-  version         = var.aws_eks_cluster_version
-  instance_types  = [var.eks_instance_type]
-
-  scaling_config {
-    desired_size = var.eks_desired_size
-    max_size     = var.eks_max_size
-    min_size     = var.eks_min_size
-  }
-
-  update_config {
-    max_unavailable = 1
-  }
-
-  depends_on = [
-    aws_eks_cluster.cluster
-  ]
-
-  tags = {
-    name = "${var.aws_eks_cluster_name}-eks-node-group-2"
-  }
-}
-
-# Kubernetes provider for IRSA service accounts
-provider "kubernetes" {
-  host                   = aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(aws_eks_cluster.cluster.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = aws_eks_cluster.cluster.name
-}
-
-# Cluster Autoscaler Service Account
-resource "kubernetes_service_account" "cluster_autoscaler" {
-  metadata {
-    name      = "cluster-autoscaler"
-    namespace = "kube-system"
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.cluster_autoscaler.arn
-    }
-  }
-
-  depends_on = [
-    aws_iam_role.cluster_autoscaler,
-    aws_eks_cluster.cluster
-  ]
+  description             = "KMS key for EKS cluster ${var.aws_eks_cluster_name} (secrets)"
+  deletion_window_in_days = 30
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid       = "Enable IAM User Permissions",
+        Effect    = "Allow",
+        Principal = { AWS = "*" },
+        Action    = "kms:*",
+        Resource  = "*"
+      }
+    ]
+  })
 }

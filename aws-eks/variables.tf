@@ -1,67 +1,172 @@
+##############################################
+# General
+##############################################
+
 variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
+  type = string
 }
 
 variable "aws_eks_cluster_name" {
-  description = "Name of the EKS cluster"
-  type        = string
+  type = string
 }
 
 variable "aws_eks_cluster_version" {
-  description = "AWS EKS cluster Version"
-  type        = string
-  default     = null
+  type    = string
+  default = "1.29"
 }
 
+variable "default_tags" {
+  type = map(string)
+  default = {
+    Environment = "production"
+  }
+}
+
+##############################################
+# Networking
+##############################################
+
 variable "vpc_id" {
-  description = "VPC ID where EKS will be deployed"
-  type        = string
+  type = string
 }
 
 variable "aws_vpc_private_subnet_ids" {
-  description = "List of private subnet IDs for EKS nodes (must be in at least 2 AZs)"
-  type        = list(string)
+  type = list(string)
 }
 
 variable "aws_eks_cluster_sg_ids" {
-  description = "List of security group IDs for EKS control plane"
-  type        = list(string)
+  type = list(string)
 }
 
 variable "cluster_endpoint_public_access_cidrs" {
-  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint."
+  description = "Allowed CIDRs for EKS API public endpoint"
   type        = list(string)
-  default     = ["0.0.0.0/0"]
-}
 
-variable "eks_desired_size" {
-  description = "Desired number of nodes in the EKS Node Group"
-  type        = number
-}
-
-variable "eks_max_size" {
-  description = "Maximum number of nodes in the EKS Node Group"
-  type        = number
-}
-
-variable "eks_min_size" {
-  description = "Minimum number of nodes in the EKS Node Group"
-  type        = number
-}
-
-variable "eks_instance_type" {
-  description = "Instance type for EKS Node Group"
-  type        = string
+  # ⚠️ CHANGE TO YOUR IP FOR PRODUCTION
+  default = ["0.0.0.0/0"]
 }
 
 variable "eks_endpoint_private_access" {
-  description = "Enable private access to EKS API server"
-  type        = bool
+  type    = bool
+  default = true
 }
 
 variable "eks_endpoint_public_access" {
-  description = "Enable public access to EKS API server"
-  type        = bool
+  type    = bool
+  default = false
+}
+
+##############################################
+# Cluster Logging
+##############################################
+
+variable "control_plane_log_types" {
+  type    = list(string)
+  default = ["api", "audit", "authenticator"]
+}
+
+##############################################
+# KMS
+##############################################
+
+variable "enable_kms" {
+  type    = bool
+  default = false
+}
+
+##############################################
+# Terraform Node Group Config
+##############################################
+
+variable "eks_desired_size" {
+  type    = number
+  default = 2
+}
+
+variable "eks_min_size" {
+  type    = number
+  default = 1
+}
+
+variable "eks_max_size" {
+  type    = number
+  default = 4
+}
+
+variable "eks_instance_types" {
+  type    = list(string)
+  default = ["t3.medium"]
+}
+
+variable "node_labels" {
+  type    = map(string)
+  default = {}
+}
+
+##############################################
+# Launch Template Nodegroup Variables
+##############################################
+
+variable "node_instance_type" {
+  type    = string
+  default = "t3.medium"
+}
+
+variable "node_volume_size" {
+  type    = number
+  default = 20
+}
+
+variable "node_desired" {
+  type    = number
+  default = 2
+}
+
+variable "node_min" {
+  type    = number
+  default = 1
+}
+
+variable "node_max" {
+  type    = number
+  default = 4
+}
+
+##############################################
+# Spot Node Group
+##############################################
+
+variable "create_spot_node_group" {
+  type    = bool
+  default = false
+}
+
+variable "spot_instance_types" {
+  type    = list(string)
+  default = ["t3.small"]
+}
+
+variable "spot_desired_size" {
+  type    = number
+  default = 0
+}
+
+variable "spot_min_size" {
+  type    = number
+  default = 0
+}
+
+variable "spot_max_size" {
+  type    = number
+  default = 0
+}
+
+##############################################
+# EBS CSI Driver
+##############################################
+
+variable "ebs_csi_version" {
+  description = "Pinned version of EBS CSI Driver"
+  type        = string
+  default     = "v1.31.0-eksbuild.1"
 }
