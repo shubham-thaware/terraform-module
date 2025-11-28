@@ -22,10 +22,10 @@ output "cluster_ca" {
 # Node Group Outputs
 ##############################################
 
-output "nodegroup_arn" {
-  description = "ARN of the default EKS Node Group"
-  value       = aws_eks_node_group.default.arn
+output "spot_nodegroup_arn" {
+  value = length(aws_eks_node_group.spot) > 0 ? aws_eks_node_group.spot[0].arn : null
 }
+
 
 ##############################################
 # IAM Outputs
