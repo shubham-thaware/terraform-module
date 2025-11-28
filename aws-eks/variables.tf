@@ -78,25 +78,25 @@ variable "enable_kms" {
 # Terraform Node Group Config
 ##############################################
 
-variable "eks_desired_size" {
-  type    = number
-  default = 2
-}
+# variable "eks_desired_size" {
+#   type    = number
+#   default = 2
+# }
 
-variable "eks_min_size" {
-  type    = number
-  default = 1
-}
+# variable "eks_min_size" {
+#   type    = number
+#   default = 1
+# }
 
-variable "eks_max_size" {
-  type    = number
-  default = 4
-}
+# variable "eks_max_size" {
+#   type    = number
+#   default = 4
+# }
 
-variable "eks_instance_types" {
-  type    = list(string)
-  default = ["t3.medium"]
-}
+# variable "eks_instance_types" {
+#   type    = list(string)
+#   default = ["t3.medium"]
+# }
 
 variable "node_labels" {
   type    = map(string)
