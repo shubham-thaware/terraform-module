@@ -13,15 +13,16 @@ resource "aws_eks_cluster" "this" {
 
   enabled_cluster_log_types = var.control_plane_log_types
 
-  encryption_config {
-    dynamic "provider" {
-      for_each = var.enable_kms ? [1] : []
-      content {
-        key_arn = aws_kms_key.cluster[0].arn
-      }
+dynamic "encryption_config" {
+  for_each = var.enable_kms ? [1] : []
+
+  content {
+    resources = ["secrets"]
+    provider {
+      key_arn = aws_kms_key.cluster[0].arn
     }
-    resources = var.enable_kms ? ["secrets"] : []
   }
+}
 
 
   tags = merge(var.default_tags, { "Name" = var.aws_eks_cluster_name })
