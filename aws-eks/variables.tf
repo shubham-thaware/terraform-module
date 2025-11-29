@@ -115,9 +115,3 @@ variable "spot_max_size" {
   default = 0
 }
 
-
-variable "ebs_csi_version" {
-  description = "Pinned version of EBS CSI Driver"
-  type        = string
-  default     = "v1.31.0-eksbuild.1"
-}
