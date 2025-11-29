@@ -11,6 +11,10 @@ resource "aws_eks_cluster" "this" {
     security_group_ids      = var.aws_eks_cluster_sg_ids
   }
 
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
   enabled_cluster_log_types = var.control_plane_log_types
 
 dynamic "encryption_config" {
