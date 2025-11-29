@@ -54,3 +54,27 @@ resource "aws_eks_addon" "vpc_cni" {
     aws_eks_cluster.this
   ]
 }
+
+#EBS CSI Driver
+data "aws_eks_addon_version" "ebs_csi" {
+  addon_name         = "aws-ebs-csi-driver"
+  kubernetes_version = aws_eks_cluster.this.version
+  most_recent        = true
+}
+
+resource "aws_eks_addon" "ebs_csi" {
+  cluster_name  = aws_eks_cluster.this.name
+  addon_name    = "aws-ebs-csi-driver"
+  addon_version = data.aws_eks_addon_version.ebs_csi.version
+
+  service_account_role_arn = aws_iam_role.ebs_csi_irsa.arn
+
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_iam_role_policy_attachment.ebs_csi_policy
+  ]
+}
+
