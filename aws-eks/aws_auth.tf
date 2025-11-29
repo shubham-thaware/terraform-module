@@ -86,21 +86,3 @@ resource "kubernetes_service_account" "cluster_autoscaler" {
   ]
 }
 
-########################################
-# EBS CSI Driver Addon (Pinned & Safe)
-########################################
-
-resource "aws_eks_addon" "ebs_csi" {
-  cluster_name                = aws_eks_cluster.this.name
-  addon_name                  = "aws-ebs-csi-driver"
-  service_account_role_arn    = aws_iam_role.ebs_csi.arn
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
-
-  addon_version = var.ebs_csi_version # e.g. v1.31.0-eksbuild.1
-
-  depends_on = [
-    aws_eks_cluster.this,
-    aws_iam_role.ebs_csi
-  ]
-}
