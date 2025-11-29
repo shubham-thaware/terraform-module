@@ -114,4 +114,8 @@ variable "spot_max_size" {
   type    = number
   default = 0
 }
+variable "authentication_mode" {
+  type    = string
+  default = "API_AND_CONFIG_MAP"
+}
 
