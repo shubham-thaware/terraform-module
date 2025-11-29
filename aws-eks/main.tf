@@ -12,7 +12,7 @@ resource "aws_eks_cluster" "this" {
   }
 
   access_config {
-    authentication_mode = "API_AND_CONFIG_MAP"
+    authentication_mode = var.authentication_mode
   }
 
   enabled_cluster_log_types = var.control_plane_log_types
