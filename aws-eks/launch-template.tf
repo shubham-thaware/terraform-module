@@ -8,7 +8,7 @@ locals {
 }
 
 data "aws_ssm_parameter" "eks_ami" {
-  name = local.use_al2023 ? "/aws/service/eks/optimized-ami/${var.aws_eks_cluster_version}/amazon-linux-2023/recommended/image_id" : "/aws/service/eks/optimized-ami/${var.aws_eks_cluster_version}/amazon-linux-2/recommended/image_id"
+  name = local.use_al2023 ? "/aws/service/eks/optimized-ami/${var.aws_eks_cluster_version}/amazon-linux-2023/x86_64/standard/recommended/image_id" : "/aws/service/eks/optimized-ami/${var.aws_eks_cluster_version}/amazon-linux-2/recommended/image_id"
 }
 
 
